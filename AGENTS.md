@@ -39,3 +39,17 @@ Keep `MetalamaEnabled=false` in the test project and `MetalamaRemoveCompileTimeO
 The initial commit uses `chore: initialize .NET solution with Metalama and unit tests`. Follow this concise, type-prefixed style, choosing an appropriate prefix such as `feat:`, `fix:`, or `docs:`. Keep changes focused.
 
 Pull requests should describe the change, link related issues when applicable, and report build/test results. Update setup documentation when prerequisites or commands change. Exclude generated `bin/`, `obj/`, and test-result files.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs use local Markdown under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout: root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
