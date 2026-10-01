@@ -1,0 +1,3 @@
+# Require complete localized resources
+
+The culture-neutral reference resource defines the case-sensitive resource keys for its resource set. Every associated localized resource must contain exactly those keys; missing and additional keys cause compilation errors. This deliberately rejects partial translations that could otherwise rely on runtime fallback, because a successful build must establish key consistency across all included cultures. Runtime lookup still uses standard .NET resource fallback for requested cultures without their own resource file; fallback does not relax validation of files that are present.
