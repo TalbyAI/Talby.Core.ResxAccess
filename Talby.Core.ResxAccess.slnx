@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Talby.Core.ResxAccess/Talby.Core.ResxAccess.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Talby.Core.ResxAccess.Tests/Talby.Core.ResxAccess.Tests.csproj" />
+  </Folder>
+</Solution>
