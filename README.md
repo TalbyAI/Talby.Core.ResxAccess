@@ -65,6 +65,54 @@ dotnet build Talby.Core.ResxAccess.slnx --configuration Release --no-restore
 dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-restore
 ```
 
+### Fast/full execution experiment (pending review)
+
+The candidate entry points require PowerShell 7 (`pwsh`) and the Release restore
+and solution build above. Rebuild after changing source, resources, or fixtures;
+both commands deliberately use `--no-build --no-restore`. Fast still requires
+building both test projects and the library.
+
+```powershell
+# During local iteration: unit tests and all AspectTests.
+pwsh -NoProfile -File tests/run.ps1 -Mode fast
+
+# Required verification before merge: every test, including consumer integration.
+pwsh -NoProfile -File tests/run.ps1 -Mode full
+```
+
+Fast uses `Category!=Integration` and defers all four `RawTextConsumerTests`:
+`CanCompileAndInvokeIndependentResourceSets`,
+`ReportsEachInvalidResourceAndEmbeddingInOneBuild`,
+`ReportsMalformedReferenceResourceWithoutAspectCrash`, and
+`DescribesMissingRuntimeManifestAndResourceKey`. Its output names the deferred
+tests. Fast success does not verify generation or runtime lookup end to end.
+Full applies no filter; the standard solution-level `dotnet test` command above
+also continues to select every test.
+
+Each entry point propagates test failures and checks the passed TRX identities
+against the experiment's fixed inventory (four fast, eight full), rejecting
+empty, skipped, missing, duplicate, or unexpected selections. Adding or renaming
+tests requires reviewing and updating that inventory in `tests/run.ps1`.
+Unique TRX directories under ignored `test-results/execution/` prevent stale
+results from satisfying the check.
+
+CI-ready full verification from the repository root:
+
+```powershell
+dotnet restore Talby.Core.ResxAccess.slnx
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+dotnet build Talby.Core.ResxAccess.slnx --configuration Release --no-restore
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+pwsh -NoProfile -File tests/run.ps1 -Mode full
+exit $LASTEXITCODE
+```
+
+No CI provider is configured, so this requirement is documented rather than
+automatically enforced. The [experiment report](.scratch/test-policy/results/01-execution.md)
+contains measurements, selection checks, and the unchanged assertion inventory.
+This candidate awaits user review before adoption; it does not establish the
+final test classification policy.
+
 The solution contains the library, ordinary xUnit tests, and a dedicated
 `Metalama.Testing.AspectTesting` 2026.1.28 snapshot project with automatic
 file-based discovery. Ordinary tests keep `MetalamaEnabled=false`; the library
