@@ -1,0 +1,1 @@
+// Error TRESX003 on `Texts`: `Unsupported Reference Resource embedding: The consumer project directory is unavailable.`

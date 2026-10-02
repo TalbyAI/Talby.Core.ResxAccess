@@ -1,18 +1,63 @@
 # Talby.Core.ResxAccess
 
-Solución base con una biblioteca C# y pruebas unitarias para .NET 10.
+Metalama generates Raw Text access methods on a consumer-declared, non-generic
+static class. A `partial` declaration is not required.
 
-- `src/Talby.Core.ResxAccess`: biblioteca principal con `Metalama.Framework` 2026.1.28.
-- `tests/Talby.Core.ResxAccess.Tests`: pruebas con xUnit 2.9.3 y `Metalama.Testing.UnitTesting` 2026.1.28; referencia la biblioteca principal.
+```csharp
+using System.Globalization;
+using Talby.Core.ResxAccess;
 
-## Requisitos
+[GenerateResxAccess("Resources/Labels.resx")]
+internal static class Texts
+{
+}
 
-SDK .NET 10.0.401 o un parche posterior de la misma banda 10.0.4xx,
-según `global.json`, y acceso a NuGet.org para restaurar los paquetes.
+// For the Resource Key "Welcome":
+// Texts.Welcome();
+// Texts.Welcome(CultureInfo.GetCultureInfo("es"));
+```
 
-## Compilar y ejecutar las pruebas
+Each representable Resource Key receives two public static methods returning
+`string`. The parameterless method selects `CurrentUICulture`; the other requires
+a non-null `CultureInfo resourceCulture`. Raw Text is returned unchanged,
+including Formatting Placeholders and whitespace. Lookup uses standard .NET
+parent-culture and Reference Resource fallback. The target class retains its
+name, namespace, and accessibility.
 
-Desde la raíz del repositorio:
+Reference Resource paths are resolved relative to the consumer project directory.
+Resources must be text `.resx` files embedded using standard SDK conventions.
+The manifest base name comes from SDK metadata, including resource location,
+`RootNamespace`, and implicit or explicit `DependentUpon` C# type association.
+Explicit `LogicalName`, explicit `ManifestResourceName`, and linked resources
+are rejected. Missing runtime resources throw descriptive `InvalidOperationException`
+instances; missing manifest or satellite exceptions are retained as inner exceptions.
+
+This first slice generates Raw Text only. Localized Resource validation,
+Formatted Text, configurable identifier policies, and verification of incremental
+build and IDE refresh belong to the dependent issues.
+
+## Consumer build integration
+
+The NuGet package includes `buildTransitive/Talby.Core.ResxAccess.targets`, imported
+automatically for package consumers. It records the SDK's effective resource names
+and exposes the resource map to the aspect through a compiler-visible property.
+
+When referencing the source library with `ProjectReference`, also import its targets
+in the consumer project (adjust paths to your layout):
+
+```xml
+<ItemGroup>
+  <ProjectReference Include="../src/Talby.Core.ResxAccess/Talby.Core.ResxAccess.csproj" />
+</ItemGroup>
+<Import Project="../src/Talby.Core.ResxAccess/buildTransitive/Talby.Core.ResxAccess.targets" />
+```
+
+## Build and test
+
+Install .NET SDK 10.0.401 or a later patch in the 10.0.4xx feature band,
+as selected by `global.json`. NuGet.org access is required for restore.
+
+Run from the repository root:
 
 ```powershell
 dotnet restore Talby.Core.ResxAccess.slnx
@@ -20,9 +65,23 @@ dotnet build Talby.Core.ResxAccess.slnx --configuration Release --no-restore
 dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-restore
 ```
 
-La prueba inicial crea una compilación con Metalama y consulta su modelo de código.
-Comprueba la configuración de pruebas; la biblioteca aún no contiene funcionalidad.
+The solution contains the library, ordinary xUnit tests, and a dedicated
+`Metalama.Testing.AspectTesting` 2026.1.28 snapshot project with automatic
+file-based discovery. Ordinary tests keep `MetalamaEnabled=false`; the library
+keeps `MetalamaRemoveCompileTimeOnlyCode=false`.
 
-Metalama está desactivado en el proyecto de pruebas. La biblioteca conserva el
-código de compilación para permitir probar sus helpers, siguiendo la
-[documentación de Metalama](https://doc.metalama.net/conceptual/aspects/testing/compile-time-testing).
+Consumer integration tests create temporary SDK projects, build them from a
+different working directory, and invoke their assemblies. They check the public
+API, SDK naming, culture lookup, diagnostics, and runtime failures without
+asserting private helper layouts. Malformed XML is diagnosed by SDK resource
+generation before the aspect executes (`MSB3103`).
+
+The stock snapshot runner does not forward the consumer project path or resource
+map, even when resource files and the targets import are present in its project.
+`UnavailableProjectContext` records this limitation. Diagnostics independent of
+SDK context have reviewed `.t.cs` baselines; generation and context-dependent
+diagnostics are verified through real consumer builds. No custom snapshot runner
+or production test hook is required.
+
+Relevant upstream documentation: [SDK resource manifest names](https://learn.microsoft.com/en-us/dotnet/core/resources/manifest-file-names)
+and [Metalama aspect testing](https://doc.metalama.net/conceptual/aspects/testing/aspect-testing).

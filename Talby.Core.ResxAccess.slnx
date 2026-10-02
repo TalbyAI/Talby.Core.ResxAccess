@@ -4,5 +4,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Talby.Core.ResxAccess.Tests/Talby.Core.ResxAccess.Tests.csproj" />
+    <Project Path="tests/Talby.Core.ResxAccess.AspectTests/Talby.Core.ResxAccess.AspectTests.csproj" />
   </Folder>
 </Solution>

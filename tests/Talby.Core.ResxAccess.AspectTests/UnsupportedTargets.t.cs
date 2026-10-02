@@ -1,0 +1,2 @@
+// Error TRESX002 on `InstanceTarget`: `Resource Access requires a non-generic static class: InstanceTarget`
+// Error TRESX002 on `GenericTarget`: `Resource Access requires a non-generic static class: GenericTarget<T>`
