@@ -14,128 +14,127 @@ public class RawTextConsumerTests
         """;
 
     [Fact]
-    public async Task CanCompileAndInvokeRawTextOnNonPartialStaticClass()
+    public async Task CanCompileAndInvokeIndependentResourceSets()
     {
         using var consumer = new ConsumerProject("""
             using System.Globalization;
             using Talby.Core.ResxAccess;
 
-            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("fr-FR");
-            Console.WriteLine(Customer.Api.Texts.Welcome());
-            Console.WriteLine(Customer.Api.Texts.Welcome(CultureInfo.InvariantCulture));
-            Console.WriteLine(Customer.Api.Texts.Plain());
-            var type = typeof(Customer.Api.Texts);
-            if (type.IsPublic || type.FullName != "Customer.Api.Texts") throw new Exception("Class identity changed.");
-            var methods = type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly);
-            if (methods.Length != 4 || methods.Any(m => m.Name.StartsWith("Format"))) throw new Exception("Unexpected API.");
+            var originalCulture = CultureInfo.CurrentCulture;
+            var originalUICulture = CultureInfo.CurrentUICulture;
+            try
+            {
+                CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("fr-FR");
+                Console.WriteLine(Customer.Api.Texts.Welcome());
+                Console.WriteLine(Customer.Api.Texts.Welcome(CultureInfo.InvariantCulture));
+                Console.WriteLine(Customer.Api.Texts.Plain());
+                var type = typeof(Customer.Api.Texts);
+                if (type.IsPublic || type.FullName != "Customer.Api.Texts") throw new Exception("Class identity changed.");
+                var methods = type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly);
+                if (methods.Length != 4 || methods.Any(m => m.Name.StartsWith("Format"))) throw new Exception("Unexpected API.");
+
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
+                CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("es-MX");
+                Console.WriteLine(Customer.Api.AssociatedTexts.Plain());
+                Console.WriteLine(Customer.Api.AssociatedTexts.Plain(CultureInfo.GetCultureInfo("fr-CA")));
+                Console.WriteLine(Customer.Api.AssociatedTexts.Plain(CultureInfo.GetCultureInfo("de-DE")));
+                Console.WriteLine(Customer.Api.AssociatedTexts.Welcome(CultureInfo.InvariantCulture));
+                if (!typeof(Customer.Api.AssociatedTexts).IsPublic) throw new Exception("Accessibility changed.");
+                try { Customer.Api.AssociatedTexts.Plain(null!); throw new Exception("Null culture accepted."); }
+                catch (ArgumentNullException) { }
+
+                CultureInfo.CurrentCulture = originalCulture;
+                CultureInfo.CurrentUICulture = originalUICulture;
+                if (Customer.Api.EdgeTexts.Plain() != "Edge text" || Customer.Api.EdgeTexts.@class() != "Keyword" || Customer.Api.EdgeTexts.Café() != "Unicode" || Customer.Api.EdgeTexts.Empty() != "" || Customer.Api.EdgeTexts.Blank() != "   ") throw new Exception("Raw Text changed.");
+                Console.WriteLine("Preserved");
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = originalCulture;
+                CultureInfo.CurrentUICulture = originalUICulture;
+            }
 
             namespace Customer.Api
             {
-                [GenerateResxAccess("Resources/Labels.resx")]
+                [GenerateResxAccess("Resources/Basic.resx")]
                 internal static class Texts
                 {
                 }
-            }
-            """);
-        consumer.Write("Resources/Labels.resx", ReferenceResource.Replace("</root>", "<data name=\"invalid-key\"><value>Not representable</value></data></root>"));
 
-        var build = await consumer.Build();
-        Assert.True(build.ExitCode == 0, build.Output);
-        var invocation = await consumer.Invoke();
-        Assert.True(invocation.ExitCode == 0, invocation.Output);
-        Assert.Equal("  Hello {name@string}, {0:N2}!  \n  Hello {name@string}, {0:N2}!  \nJust text\n", invocation.Output.Replace("\r\n", "\n"));
-    }
+                [GenerateResxAccess("Resources/Associated.resx")]
+                public static class AssociatedTexts
+                {
+                }
 
-    [Fact]
-    public async Task UsesSdkAssociatedTypeNameAndIndependentResourceCulture()
-    {
-        using var consumer = new ConsumerProject("""
-            using System.Globalization;
-            using Talby.Core.ResxAccess;
-
-            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
-            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("es-MX");
-            Console.WriteLine(Customer.Api.Texts.Plain());
-            Console.WriteLine(Customer.Api.Texts.Plain(CultureInfo.GetCultureInfo("fr-CA")));
-            Console.WriteLine(Customer.Api.Texts.Plain(CultureInfo.GetCultureInfo("de-DE")));
-            Console.WriteLine(Customer.Api.Texts.Welcome(CultureInfo.InvariantCulture));
-            if (!typeof(Customer.Api.Texts).IsPublic) throw new Exception("Accessibility changed.");
-            try { Customer.Api.Texts.Plain(null!); throw new Exception("Null culture accepted."); }
-            catch (ArgumentNullException) { }
-
-            namespace Customer.Api
-            {
-                [GenerateResxAccess("Resources/Labels.resx")]
-                public static class Texts
+                [GenerateResxAccess("Resources/en.resx")]
+                public static class EdgeTexts
                 {
                 }
             }
             """);
-        consumer.Write("Resources/Labels.cs", """
+        consumer.Write("Resources/Basic.resx", ReferenceResource.Replace("Just text", "Basic text").Replace("</root>", "<data name=\"invalid-key\"><value>Not representable</value></data></root>"));
+        consumer.Write("Resources/Associated.cs", """
             namespace Unrelated.Namespace;
             public class ResourceAnchor
             {
             }
             """);
-        consumer.Write("Resources/Labels.resx", ReferenceResource);
-        consumer.Write("Resources/Labels.es.resx", ReferenceResource.Replace("Just text", "Texto"));
-        consumer.Write("Resources/Labels.fr.resx", ReferenceResource.Replace("Just text", "Texte"));
+        var associatedResource = ReferenceResource.Replace("Hello", "Associated hello");
+        consumer.Write("Resources/Associated.resx", associatedResource.Replace("Just text", "Associated text"));
+        consumer.Write("Resources/Associated.es.resx", associatedResource.Replace("Just text", "Associated Texto"));
+        consumer.Write("Resources/Associated.fr.resx", associatedResource.Replace("Just text", "Associated Texte"));
+        consumer.Write("Resources/en.resx", ReferenceResource.Replace("Just text", "Edge text").Replace("</root>", """
+            <data name="class"><value>Keyword</value></data>
+            <data name="Café"><value>Unicode</value></data>
+            <data name="Empty"><value></value></data>
+            <data name="Blank" xml:space="preserve"><value>   </value></data>
+            </root>
+            """));
 
         var build = await consumer.Build();
         Assert.True(build.ExitCode == 0, build.Output);
         var invocation = await consumer.Invoke();
         Assert.True(invocation.ExitCode == 0, invocation.Output);
-        Assert.Equal("Texto\nTexte\nJust text\n  Hello {name@string}, {0:N2}!  \n", invocation.Output.Replace("\r\n", "\n"));
+        Assert.Equal("  Hello {name@string}, {0:N2}!  \n  Hello {name@string}, {0:N2}!  \nBasic text\nAssociated Texto\nAssociated Texte\nAssociated text\n  Associated hello {name@string}, {0:N2}!  \nPreserved\n", invocation.Output.Replace("\r\n", "\n"));
     }
 
     [Fact]
-    public async Task ReportsUnsupportedEmbeddingMetadata()
+    public async Task ReportsEachInvalidResourceAndEmbeddingInOneBuild()
     {
-        foreach (var metadata in new[]
+        using var consumer = new ConsumerProject("Console.WriteLine(\"Unused\");", projectItems: """
+            <EmbeddedResource Update="Resources/LogicalName.resx"><LogicalName>Custom.LogicalName.resources</LogicalName></EmbeddedResource>
+            <EmbeddedResource Update="Resources/ManifestResourceName.resx"><ManifestResourceName>Custom.ManifestResourceName</ManifestResourceName></EmbeddedResource>
+            <EmbeddedResource Update="Resources/Linked.resx"><Link>Other/Linked.resx</Link></EmbeddedResource>
+            """);
+        var cases = new[]
         {
-            "<LogicalName>Custom.Labels.resources</LogicalName>",
-            "<ManifestResourceName>Custom.Labels</ManifestResourceName>",
-            "<Link>Other/Labels.resx</Link>"
-        })
+            (Target: "LogicalNameTarget", Resource: "Resources/LogicalName.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/LogicalName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
+            (Target: "ManifestResourceNameTarget", Resource: "Resources/ManifestResourceName.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/ManifestResourceName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
+            (Target: "LinkedTarget", Resource: "Resources/Linked.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/Linked.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
+            (Target: "MissingResourceTarget", Resource: "Resources/Missing.resx", Code: "TRESX001", Message: "Invalid Reference Resource: 'Resources/Missing.resx' does not exist in the consumer project."),
+            (Target: "LocalizedResourceTarget", Resource: "Resources/Localized.es.resx", Code: "TRESX001", Message: "Invalid Reference Resource: 'Resources/Localized.es.resx' is culture-specific; select the culture-neutral Reference Resource.")
+        };
+        foreach (var (target, resource, _, _) in cases)
         {
-            using var consumer = new ConsumerProject("""
+            consumer.Write($"{target}.cs", $$"""
                 using Talby.Core.ResxAccess;
-                Console.WriteLine("Unused");
-                [GenerateResxAccess("Resources/Labels.resx")]
-                public static class Texts
-                {
-                }
-                """, $"<EmbeddedResource Update=\"Resources/Labels.resx\">{metadata}</EmbeddedResource>");
-            consumer.Write("Resources/Labels.resx", ReferenceResource);
-
-            var build = await consumer.Build();
-            Assert.NotEqual(0, build.ExitCode);
-            Assert.Contains("TRESX003", build.Output);
-        }
-    }
-
-    [Fact]
-    public async Task ReportsInvalidReferenceResourcesInRealBuilds()
-    {
-        foreach (var (referenceResource, resourceFile) in new[]
-        {
-            ("Resources/Missing.resx", "Resources/Labels.resx"),
-            ("Resources/Labels.es.resx", "Resources/Labels.es.resx")
-        })
-        {
-            using var consumer = new ConsumerProject($$"""
-                using Talby.Core.ResxAccess;
-                Console.WriteLine("Unused");
-                [GenerateResxAccess("{{referenceResource}}")]
-                public static class Texts
+                [GenerateResxAccess("{{resource}}")]
+                public static class {{target}}
                 {
                 }
                 """);
-            consumer.Write(resourceFile, ReferenceResource);
+            if (target != "MissingResourceTarget")
+            {
+                consumer.Write(resource, ReferenceResource);
+            }
+        }
 
-            var build = await consumer.Build();
-            Assert.NotEqual(0, build.ExitCode);
-            Assert.Contains("TRESX001", build.Output);
+        var build = await consumer.Build();
+        Assert.NotEqual(0, build.ExitCode);
+        var diagnosticLines = build.Output.Split('\n');
+        foreach (var (target, _, code, message) in cases)
+        {
+            Assert.Contains(diagnosticLines, line => line.Contains($"{target}.cs(", StringComparison.Ordinal) && line.Contains($"error {code}: {message}", StringComparison.Ordinal));
         }
     }
 
@@ -194,32 +193,5 @@ public class RawTextConsumerTests
             Assert.True(invocation.ExitCode == 0, invocation.Output);
             Assert.Equal("Descriptive failure", invocation.Output.Trim());
         }
-    }
-
-    [Fact]
-    public async Task CultureNamedNeutralFilePreservesRepresentableKeysAndBlankText()
-    {
-        using var consumer = new ConsumerProject("""
-            using Talby.Core.ResxAccess;
-            if (Texts.@class() != "Keyword" || Texts.Café() != "Unicode" || Texts.Empty() != "" || Texts.Blank() != "   ") throw new Exception("Raw Text changed.");
-            Console.WriteLine("Preserved");
-            [GenerateResxAccess("Resources/en.resx")]
-            public static class Texts
-            {
-            }
-            """);
-        consumer.Write("Resources/en.resx", ReferenceResource.Replace("</root>", """
-            <data name="class"><value>Keyword</value></data>
-            <data name="Café"><value>Unicode</value></data>
-            <data name="Empty"><value></value></data>
-            <data name="Blank" xml:space="preserve"><value>   </value></data>
-            </root>
-            """));
-
-        var build = await consumer.Build();
-        Assert.True(build.ExitCode == 0, build.Output);
-        var invocation = await consumer.Invoke();
-        Assert.True(invocation.ExitCode == 0, invocation.Output);
-        Assert.Equal("Preserved", invocation.Output.Trim());
     }
 }

@@ -177,3 +177,70 @@ analysis. No test classification policy has been introduced.
 
 Detailed evidence is in the ignored test-results directory: before-refactor and
 after-refactor-1/2 TRX files and refactor-timings.csv.
+
+## Follow-up: group compatible consumer scenarios
+
+Baseline commit: b1f28ed (test: reduce redundant consumer build cases).
+The refactor changes only RawTextConsumerTests.cs, plus this report.
+
+- CanCompileAndInvokeIndependentResourceSets builds one consumer containing
+  three independent Resource Sets and aspect targets. It retains the API,
+  accessibility, invalid identifier, SDK associated type naming, culture
+  selection/fallback, null culture, culture-named Reference Resource, Unicode,
+  keyword, empty text, whitespace, and Raw Text assertions from the three
+  previous tests. Basic, Associated, and Edge use distinct Translations so an
+  incorrect Resource Set cannot satisfy the same expected text. CurrentCulture
+  and CurrentUICulture are restored between scenarios and in finally.
+- ReportsEachInvalidResourceAndEmbeddingInOneBuild builds one consumer with five
+  invalid targets in separate source files. Each assertion requires its target
+  filename, diagnostic code, and complete expected message on the same output
+  line. All three embedding metadata errors and both invalid Reference Resource
+  errors must appear; a generic unsuccessful build is insufficient.
+- The malformed XML test and the two runtime failure builds remain separate and
+  unchanged. ConsumerProject, production code, project settings, AspectTests,
+  and agent instructions remain unchanged.
+
+### Assertion checks
+
+Both grouped tests passed initially. Two temporary input mutations then produced
+two expected test failures:
+
+1. Pointing the Basic target at the Associated Reference Resource compiled and
+   invoked successfully, but failed the expected Translation output assertion.
+2. Removing the LogicalName override left the other four invalid cases in place
+   and the build still failed. The grouped diagnostic assertion nevertheless
+   failed because the LogicalNameTarget diagnostic was absent.
+
+Both mutations were reverted before the final Release build and full-suite
+measurements. No production mutation or additional test dependency was needed.
+
+### Measured results
+
+Measurements use the same Release full-solution test command, --no-build,
+--no-restore, normal verbosity, and TRX logging. Explicit solution builds are
+excluded from wall time. Both builds passed with zero warnings/errors.
+
+| Scenario group | Before grouping | After run 1 | After run 2 | Builds before -> after |
+| --- | ---: | ---: | ---: | ---: |
+| Successful generation and lookup | 8.61 s | 3.09 s | 3.73 s | 3 -> 1 |
+| Invalid resources and embedding | 14.38 s | 2.72 s | 3.31 s | 5 -> 1 |
+| Malformed XML (unchanged) | 2.44 s | 2.43 s | 10.25 s | 1 -> 1 |
+| Runtime failures (unchanged) | 5.99 s | 5.88 s | 7.72 s | 2 -> 2 |
+| Full command wall time | 33.12 s | 16.02 s | 26.81 s | 11 -> 5 |
+| Discovered tests passed | 11/11 | 8/8 | 8/8 | |
+
+The grouped scenarios together decreased from 22.99 s to 5.81-7.04 s. The full
+command averages 21.41 s after grouping, an observed reduction of 35.3% versus
+the immediate 33.12 s baseline. The unchanged malformed XML and runtime failure
+tests explain most of the difference between the two post-grouping runs; the
+precise source of that timing variation was not profiled in this refactor.
+
+Three fewer Facts are discovered because three successful Facts became one and
+two diagnostic Facts became one. Their scenario assertions remain in the two
+grouped Facts. Grouping reduces independent failure reporting and project
+isolation; the negative controls demonstrate detection of two masking risks,
+not a proof of equivalence for every possible future regression.
+
+Evidence: before-grouping and after-grouping-1/2 TRX files,
+grouping-negative-controls TRX, and grouping-timings.csv under the ignored
+test-results directory. No test classification policy has been introduced.
