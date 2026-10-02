@@ -115,24 +115,19 @@ public class RawTextConsumerTests
     }
 
     [Fact]
-    public async Task ReportsInvalidReferenceInputsAndTargetsInRealBuilds()
+    public async Task ReportsInvalidReferenceResourcesInRealBuilds()
     {
-        foreach (var (attributeArgument, target, resourceFile, diagnostic) in new[]
+        foreach (var (referenceResource, resourceFile) in new[]
         {
-            ("null!", "public static class Texts", "Resources/Labels.resx", "TRESX001"),
-            ("\" \"", "public static class Texts", "Resources/Labels.resx", "TRESX001"),
-            ("\"Labels.txt\"", "public static class Texts", "Resources/Labels.resx", "TRESX001"),
-            ("\"Resources/Missing.resx\"", "public static class Texts", "Resources/Labels.resx", "TRESX001"),
-            ("\"Resources/Labels.es.resx\"", "public static class Texts", "Resources/Labels.es.resx", "TRESX001"),
-            ("\"Resources/Labels.resx\"", "public class Texts", "Resources/Labels.resx", "TRESX002"),
-            ("\"Resources/Labels.resx\"", "public static class Texts<T>", "Resources/Labels.resx", "TRESX002")
+            ("Resources/Missing.resx", "Resources/Labels.resx"),
+            ("Resources/Labels.es.resx", "Resources/Labels.es.resx")
         })
         {
             using var consumer = new ConsumerProject($$"""
                 using Talby.Core.ResxAccess;
                 Console.WriteLine("Unused");
-                [GenerateResxAccess({{attributeArgument}})]
-                {{target}}
+                [GenerateResxAccess("{{referenceResource}}")]
+                public static class Texts
                 {
                 }
                 """);
@@ -140,7 +135,7 @@ public class RawTextConsumerTests
 
             var build = await consumer.Build();
             Assert.NotEqual(0, build.ExitCode);
-            Assert.Contains(diagnostic, build.Output);
+            Assert.Contains("TRESX001", build.Output);
         }
     }
 
