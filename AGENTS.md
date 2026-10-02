@@ -36,6 +36,11 @@ Keep `MetalamaEnabled=false` in the test project and `MetalamaRemoveCompileTimeO
 
 ## Commit & Pull Request Guidelines
 
+- Once `origin` is configured, never create a commit directly on `main`; commit on a working branch.
+- If a commit is needed while the current branch is `main`, preserve pending changes, run `git fetch origin`, and update `main` to match `origin/main` before creating and switching to a new working branch. Restore pending changes on that branch and commit there.
+- Use a fast-forward update (`git merge --ff-only origin/main`) and verify that `main` and `origin/main` point to the same commit. If they differ or synchronization fails, stop without discarding changes or local commits.
+- Temporary exception: while no `origin` remote is configured, these branch restrictions are suspended and commits directly on `main` are allowed.
+
 The initial commit uses `chore: initialize .NET solution with Metalama and unit tests`. Follow this concise, type-prefixed style, choosing an appropriate prefix such as `feat:`, `fix:`, or `docs:`. Keep changes focused.
 
 Pull requests should describe the change, link related issues when applicable, and report build/test results. Update setup documentation when prerequisites or commands change. Exclude generated `bin/`, `obj/`, and test-result files.
