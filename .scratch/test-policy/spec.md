@@ -4,15 +4,20 @@ Status: ready-for-human
 
 ## Goal and review boundary
 
-Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. Implementation requires an explicit request; delivering a candidate does not establish a permanent test classification policy. Experiment 01 has been implemented on request and awaits user review before adoption.
+Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. An additional task separates unit tests and integration tests into explicitly named projects. Implementation requires an explicit request; delivering a candidate does not establish a permanent test classification policy. Experiment 01 has been implemented on request and awaits user review before adoption. Task 04 is planned only in the current pull request.
 
 | Issue | Previous option | Experiment | Main question | Progress |
 | --- | --- | --- | --- | --- |
 | [01](issues/01-separate-fast-and-full-execution.md) | 2 | Separate fast and full execution | How much local feedback time is saved by deferring integration tests? | Implemented; [results](results/01-execution.md) awaiting user review |
 | [02](issues/02-precompile-consumer-fixtures.md) | 3 | Precompile consumer fixtures | Does removing builds from runtime tests reduce the complete development cycle? | Not started |
 | [03](issues/03-share-testable-aspect-logic.md) | 4 | Share testable aspect logic | Can broader fast coverage validate production logic while SDK smoke tests retain the integration boundary? | Not started |
+| [04](issues/04-separate-unit-and-integration-test-projects.md) | Additional task | Separate unit and integration test projects | Can project boundaries make unit and integration execution explicit while preserving every scenario? | Planned; not started |
 
 Recommended evaluation order: 01, then 02, then 03. Keep each candidate independently reviewable and revertible. Start each from the latest approved baseline; do not include an unapproved candidate in the next change set. Rejecting one experiment does not prevent evaluating the others against the retained baseline.
+
+Task 04 is a separate project-organization task, with no mandatory dependency on
+experiments 02 or 03. Implement it from the latest approved baseline after an
+explicit implementation request; this pull request records its scope only.
 
 ## Current evidence
 
@@ -67,6 +72,36 @@ integration feedback is acceptable, while retaining the full verification gate.
 The user has not yet approved adoption. Experiments 02 and 03 remain unstarted;
 do not base either on this candidate before that review. The parent status
 records the human review handoff, not completion of all three experiments.
+
+## Additional task 04: separate unit and integration test projects
+
+Create `Talby.Core.ResxAccess.IntegrationTests` and rename the existing
+`Talby.Core.ResxAccess.Tests` project to `Talby.Core.ResxAccess.UnitTests`, including
+their directories, `.csproj` filenames, and namespaces. Move `RawTextConsumerTests`
+and its `ConsumerProject` helper to IntegrationTests; keep `MetalamaSetupTests`
+in UnitTests. Keep the dedicated AspectTests project.
+
+Expected layout:
+
+```text
+tests/
+├── Talby.Core.ResxAccess.UnitTests/          # MetalamaSetupTests
+├── Talby.Core.ResxAccess.IntegrationTests/   # RawTextConsumerTests + ConsumerProject
+├── Talby.Core.ResxAccess.AspectTests/        # existing snapshot tests
+└── run.ps1                                 # update paths and test identities if adopted
+```
+
+Update the solution, project references, execution commands, and documentation.
+Preserve every existing scenario and assertion, nullable/implicit-usings settings,
+and `MetalamaEnabled=false` in both ordinary test projects. Full solution execution
+must discover and run all three test projects. If the fast/full runner is adopted,
+fast must retain UnitTests and AspectTests while excluding IntegrationTests, and
+full must retain all tests; update its inventory for the renamed namespaces.
+Verify each ordinary test project independently and the complete Release suite.
+
+[Task 04](issues/04-separate-unit-and-integration-test-projects.md) contains the
+implementation acceptance criteria. This task changes project organization;
+the performance measurement protocol below applies to experiments 01–03.
 
 ## Shared measurement protocol
 
