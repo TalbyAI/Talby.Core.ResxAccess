@@ -9,11 +9,11 @@ namespace Talby.Core.ResxAccess;
 [CompileTime]
 internal static class ReferenceResourceReader
 {
-    public static (string ManifestBaseName, HashSet<string> Keys) Read(string referenceResource, string? projectPath, string? resourceMap)
+    public static (string ManifestBaseName, HashSet<string> Keys) Read(string referenceResource, string? projectPath, string? resourceMap, string[]? expectedCultures = null)
     {
         try
         {
-            return ReadCore(referenceResource, projectPath, resourceMap);
+            return ReadCore(referenceResource, projectPath, resourceMap, expectedCultures);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or XmlException or ArgumentException)
         {
@@ -21,7 +21,7 @@ internal static class ReferenceResourceReader
         }
     }
 
-    private static (string ManifestBaseName, HashSet<string> Keys) ReadCore(string referenceResource, string? projectPath, string? resourceMap)
+    private static (string ManifestBaseName, HashSet<string> Keys) ReadCore(string referenceResource, string? projectPath, string? resourceMap, string[]? expectedCultures)
     {
         if (string.IsNullOrWhiteSpace(referenceResource) || !string.Equals(Path.GetExtension(referenceResource), ".resx", StringComparison.OrdinalIgnoreCase))
         {
@@ -52,8 +52,8 @@ internal static class ReferenceResourceReader
         }
 
         var pathComparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-        var metadata = File.ReadLines(resourceMap).Select(line => line.Split(new[] { '|' }))
-            .FirstOrDefault(parts => parts.Length == 6 && string.Equals(parts[0], resourcePath, pathComparison));
+        var resourceMetadata = File.ReadLines(resourceMap).Select(line => line.Split(new[] { '|' })).Where(parts => parts.Length == 6).ToArray();
+        var metadata = resourceMetadata.FirstOrDefault(parts => string.Equals(parts[0], resourcePath, pathComparison));
         if (metadata is null || string.IsNullOrEmpty(metadata[1]))
         {
             throw new ResourceValidationException($"'{referenceResource}' must be an SDK EmbeddedResource.", unsupportedEmbedding: true);
@@ -70,10 +70,78 @@ internal static class ReferenceResourceReader
             throw new ResourceValidationException($"'{referenceResource}' is embedded as a culture-specific resource.");
         }
 
+        var keys = ReadKeys(resourcePath, referenceResource);
+        var cultureNames = new HashSet<string>(CultureInfo.GetCultures(CultureTypes.AllCultures).Where(c => c.Name.Length > 0).Select(c => c.Name), StringComparer.OrdinalIgnoreCase);
+        foreach (var culture in expectedCultures ?? Array.Empty<string>())
+        {
+            if (culture is null || !cultureNames.Contains(culture))
+            {
+                throw new ResourceValidationException($"ExpectedCultures contains invalid Resource Culture '{culture ?? "(null)"}'. Specify a non-empty culture name.", invalidExpectedCultures: true);
+            }
+        }
+
+        var discoveredCultures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var prefix = Path.GetFileNameWithoutExtension(resourcePath) + ".";
+        foreach (var localizedPath in Directory.EnumerateFiles(Path.GetDirectoryName(resourcePath)!).OrderBy(path => path, StringComparer.Ordinal))
+        {
+            var name = Path.GetFileNameWithoutExtension(localizedPath);
+            if (!string.Equals(Path.GetExtension(localizedPath), ".resx", StringComparison.OrdinalIgnoreCase) ||
+                !name.StartsWith(prefix, pathComparison) || !cultureNames.Contains(name.Substring(prefix.Length)))
+            {
+                continue;
+            }
+
+            discoveredCultures.Add(name.Substring(prefix.Length));
+            var localizedResource = Path.Combine(Path.GetDirectoryName(referenceResource) ?? "", Path.GetFileName(localizedPath)).Replace('\\', '/');
+            try
+            {
+                var localizedKeys = ReadKeys(localizedPath, localizedResource);
+                if (!keys.SetEquals(localizedKeys))
+                {
+                    throw new ResourceValidationException($"'{localizedResource}' must contain exactly the Reference Resource's case-sensitive Resource Keys. Missing: {DescribeKeys(keys.Except(localizedKeys))}. Additional: {DescribeKeys(localizedKeys.Except(keys))}.");
+                }
+
+                var localizedMetadata = resourceMetadata.FirstOrDefault(parts => string.Equals(parts[0], localizedPath, pathComparison));
+                if (localizedMetadata is null || localizedMetadata[1] != metadata[1] + "." + name.Substring(prefix.Length) ||
+                    localizedMetadata[2].Length > 0 || localizedMetadata[3].Length > 0 || localizedMetadata[4].Length > 0 ||
+                    !string.Equals(localizedMetadata[5], "true", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new ResourceValidationException($"'{localizedResource}' must use standard SDK satellite embedding for this Resource Set.");
+                }
+            }
+            catch (ResourceValidationException exception)
+            {
+                throw new ResourceValidationException(exception.Message, localizedResource: true);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or XmlException or ArgumentException)
+            {
+                throw new ResourceValidationException($"'{localizedResource}' could not be read: {exception.Message}", localizedResource: true);
+            }
+        }
+
+        foreach (var culture in expectedCultures ?? Array.Empty<string>())
+        {
+            if (!discoveredCultures.Contains(culture))
+            {
+                throw new ResourceValidationException($"Expected Culture '{culture}' requires an associated Localized Resource for '{referenceResource}'.", invalidExpectedCultures: true);
+            }
+        }
+
+        return (metadata[1], keys);
+    }
+
+    private static string DescribeKeys(IEnumerable<string> keys)
+    {
+        var names = keys.OrderBy(key => key, StringComparer.Ordinal).Select(key => $"'{key}'").ToArray();
+        return names.Length == 0 ? "(none)" : string.Join(", ", names);
+    }
+
+    private static HashSet<string> ReadKeys(string resourcePath, string resourceName)
+    {
         var document = XDocument.Load(resourcePath, LoadOptions.PreserveWhitespace);
         if (document.Root?.Name != "root")
         {
-            throw new ResourceValidationException($"'{referenceResource}' must contain a resx root element.");
+            throw new ResourceValidationException($"'{resourceName}' must contain a resx root element.");
         }
 
         var keys = new HashSet<string>(StringComparer.Ordinal);
@@ -84,11 +152,11 @@ internal static class ReferenceResourceReader
             if (string.IsNullOrEmpty(key) || entry.Elements("value").Count() != 1 || entry.Attribute("mimetype") is not null ||
                 (resourceType is not null && resourceType.Split(new[] { ',' })[0].Trim() != "System.String") || !keys.Add(key))
             {
-                throw new ResourceValidationException($"'{referenceResource}' must contain unique, named text entries with one value each.");
+                throw new ResourceValidationException($"'{resourceName}' must contain unique, named text entries with one value each.");
             }
         }
 
-        return (metadata[1], keys);
+        return keys;
     }
 
     public static bool IsResourceKeyIdentifier(string key)

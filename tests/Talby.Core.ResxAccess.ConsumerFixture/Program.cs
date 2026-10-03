@@ -1,6 +1,33 @@
 using System.Globalization;
 using System.Resources;
 
+if (args.Length == 1 && args[0] == "localized")
+{
+    var originalResourceCulture = CultureInfo.CurrentUICulture;
+    var originalFormattingCulture = CultureInfo.CurrentCulture;
+    try
+    {
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("es-MX");
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
+        Console.WriteLine(Customer.Api.LocalizedTexts.Plain());
+        Console.WriteLine(Customer.Api.LocalizedTexts.Plain(CultureInfo.GetCultureInfo("es-AR")));
+        Console.WriteLine(Customer.Api.LocalizedTexts.Plain(CultureInfo.GetCultureInfo("fr")));
+        Console.WriteLine(Customer.Api.LocalizedTexts.Plain(CultureInfo.GetCultureInfo("de-DE")));
+        Console.WriteLine(Customer.Api.LocalizedTexts.Plain(CultureInfo.InvariantCulture));
+        Console.WriteLine(Customer.Api.LocalizedTexts.Raw(CultureInfo.GetCultureInfo("es")));
+        Console.WriteLine($"[{Customer.Api.LocalizedTexts.Empty()}]");
+        Console.WriteLine($"[{Customer.Api.LocalizedTexts.Blank()}]");
+        Console.WriteLine($"[{Customer.Api.LocalizedTexts.Empty(CultureInfo.InvariantCulture)}]");
+        Console.WriteLine($"[{Customer.Api.LocalizedTexts.Blank(CultureInfo.InvariantCulture)}]");
+    }
+    finally
+    {
+        CultureInfo.CurrentUICulture = originalResourceCulture;
+        CultureInfo.CurrentCulture = originalFormattingCulture;
+    }
+    return;
+}
+
 if (args.Length > 0)
 {
     var missingManifest = args.Single() switch

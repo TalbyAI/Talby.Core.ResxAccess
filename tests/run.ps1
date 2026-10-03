@@ -13,6 +13,12 @@ $integration = @(
     'ReportsMalformedReferenceResourceWithoutAspectCrash'
     'DescribesMissingRuntimeManifestAndResourceKey'
 ) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.RawTextConsumerTests.$_" }
+$integration += @(
+    'CanInvokeSatelliteResourcesWithDefaultAndExplicitCulture'
+    'RejectsInconsistentLocalizedResourcesOutsideExpectedCultures'
+    'ReportsMissingAndInvalidExpectedCultures'
+    'RejectsLocalizedResourcesWithoutStandardSatelliteEmbedding'
+) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.LocalizedResourceConsumerTests.$_" }
 $fast = @(
     'Talby.Core.ResxAccess.UnitTests.MetalamaSetupTests.CanCreateAndQueryCompilation'
     'InvalidPaths'
@@ -22,6 +28,9 @@ $fast = @(
     'ResourceKeyIdentifiers'
     'ResourceValidationDiagnostics'
     'KeywordResourceKey'
+    'LocalizedResourceDiagnostics'
+    'ExpectedCultureDiagnostics'
+    'ResourceEntryValidationDiagnostics'
 )
 $fast += @(
     'ReadsTextEntriesAndSdkManifestName'
