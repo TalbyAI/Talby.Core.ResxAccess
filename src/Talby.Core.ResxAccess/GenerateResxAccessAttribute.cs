@@ -5,11 +5,14 @@ using Metalama.Framework.Code;
 
 namespace Talby.Core.ResxAccess;
 
-/// <summary>Introduces Raw Text methods for a culture-neutral, SDK-embedded .resx file.</summary>
+/// <summary>Validates a Resource Set and introduces Raw Text methods for its culture-neutral, SDK-embedded Reference Resource.</summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public sealed class GenerateResxAccessAttribute : TypeAspect
 {
     private readonly string _referenceResource;
+
+    /// <summary>Requires a Localized Resource for each culture name, in addition to validating all discovered cultures.</summary>
+    public string[]? ExpectedCultures { get; set; }
 
     public GenerateResxAccessAttribute(string referenceResource)
     {
@@ -20,7 +23,7 @@ public sealed class GenerateResxAccessAttribute : TypeAspect
     {
         var project = builder.Target.Compilation.Project;
         project.TryGetProperty("TalbyResxResourceMap", out var resourceMap);
-        ResxAccessImplementation.Build(builder, _referenceResource, project.Path, resourceMap);
+        ResxAccessImplementation.Build(builder, _referenceResource, project.Path, resourceMap, ExpectedCultures);
     }
 
     [Template]

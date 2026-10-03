@@ -10,7 +10,7 @@
 - `Talby.Core.ResxAccess.slnx` groups the library and test projects.
 - `src/Talby.Core.ResxAccess/` contains the .NET 10 library and references `Metalama.Framework`.
 - `tests/Talby.Core.ResxAccess.UnitTests/` contains `MetalamaSetupTests` and `ReferenceResourceTests`, including tests of internal compile-time helpers.
-- `tests/Talby.Core.ResxAccess.IntegrationTests/` contains all four `RawTextConsumerTests` and the `ConsumerProject` helper, and references the precompiled ConsumerFixture.
+- `tests/Talby.Core.ResxAccess.IntegrationTests/` contains `RawTextConsumerTests`, `LocalizedResourceConsumerTests`, and the `ConsumerProject` helper, and references the precompiled ConsumerFixture.
 - `tests/Talby.Core.ResxAccess.AspectTests/` contains the dedicated Metalama snapshot tests; `tests/Talby.Core.ResxAccess.ConsumerFixture/` contains the real SDK consumer executable and its resource assets.
 - `global.json` selects the SDK; `README.md` documents setup and test execution in English.
 
@@ -33,7 +33,7 @@ dotnet test tests/Talby.Core.ResxAccess.UnitTests/Talby.Core.ResxAccess.UnitTest
 dotnet test tests/Talby.Core.ResxAccess.IntegrationTests/Talby.Core.ResxAccess.IntegrationTests.csproj --configuration Release --no-build --no-restore
 ```
 
-The PowerShell 7 runner `pwsh -NoProfile -File tests/run.ps1 -Mode fast` selects UnitTests and AspectTests, deferring IntegrationTests. Use `-Mode full` before merge to execute all 29 tests and validate the inventory. Update `tests/run.ps1` when adding or renaming tests.
+The PowerShell 7 runner `pwsh -NoProfile -File tests/run.ps1 -Mode fast` selects UnitTests and AspectTests, deferring IntegrationTests. Use `-Mode full` before merge to execute all 39 tests and validate the inventory. Update `tests/run.ps1` when adding or renaming tests.
 
 ## Coding Style & Naming Conventions
 

@@ -7,7 +7,7 @@ static class. A `partial` declaration is not required.
 using System.Globalization;
 using Talby.Core.ResxAccess;
 
-[GenerateResxAccess("Resources/Labels.resx")]
+[GenerateResxAccess("Resources/Labels.resx", ExpectedCultures = new[] { "es", "fr" })]
 internal static class Texts
 {
 }
@@ -32,9 +32,32 @@ Explicit `LogicalName`, explicit `ManifestResourceName`, and linked resources
 are rejected. Missing runtime resources throw descriptive `InvalidOperationException`
 instances; missing manifest or satellite exceptions are retained as inner exceptions.
 
-This first slice generates Raw Text only. Localized Resource validation,
-Formatted Text, configurable identifier policies, and verification of incremental
-build and IDE refresh belong to the dependent issues.
+Localized Resources are discovered only in the Reference Resource's directory,
+using its base name followed by a recognized culture suffix (for example,
+`Labels.es.resx`). Every discovered Localized Resource must contain exactly the
+Reference Resource's case-sensitive Resource Keys and use standard SDK satellite
+embedding. Duplicate keys and non-text entries are rejected in both kinds of
+resource, including keys that do not receive generated methods. A Resource Set
+cannot contain multiple Localized Resources for the same Resource Culture,
+including filenames differing only in casing on a case-sensitive file system. Empty and
+whitespace-only text remains valid and is returned unchanged.
+
+Localized Resource filename suffixes must use canonical Resource Culture casing
+or its lowercase form (for example, `es-MX` or `es-mx`). Other spellings such as
+`ES` or `Es-MX` receive `TRESX004`, because standard runtime satellite probing
+on Linux and macOS requires canonical or lowercase directory names. See
+[satellite assembly loading](https://learn.microsoft.com/en-us/dotnet/core/dependency-loading/loading-resources).
+
+`ExpectedCultures` is optional. When supplied, each name must identify a non-empty
+Resource Culture with an associated Localized Resource. Culture names are matched
+without regard to case. The list supplements discovery: cultures outside it are
+still validated. Parent-culture and Reference Resource fallback apply to requested
+cultures without their own resource; they never excuse an incomplete resource
+that is present.
+
+`TRESX004` reports invalid Localized Resources; `TRESX005` reports invalid or
+missing Expected Cultures. Formatted Text, configurable identifier policies,
+and verification of incremental build and IDE refresh belong to dependent issues.
 
 ## Consumer build integration
 
@@ -67,9 +90,12 @@ dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-r
 
 The solution contains three test projects:
 
-- `Talby.Core.ResxAccess.UnitTests`: 18 tests of Metalama setup and shared Reference Resource validation.
-- `Talby.Core.ResxAccess.IntegrationTests`: four SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
-- `Talby.Core.ResxAccess.AspectTests`: seven dedicated Metalama snapshot tests.
+- `Talby.Core.ResxAccess.UnitTests`: 19 tests of Metalama setup and shared Reference Resource validation.
+- `Talby.Core.ResxAccess.IntegrationTests`: ten SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
+- `Talby.Core.ResxAccess.AspectTests`: ten dedicated Metalama snapshot tests.
+
+The integration test classes share an xUnit collection so their temporary SDK
+consumer builds cannot concurrently overwrite the referenced library's outputs.
 
 Run either ordinary test project independently after the solution build:
 
@@ -95,17 +121,23 @@ pwsh -NoProfile -File tests/run.ps1 -Mode full
 ```
 
 Fast selects the UnitTests and AspectTests projects and defers the IntegrationTests
-project with all four `RawTextConsumerTests`:
+project with four `RawTextConsumerTests`:
 `CanCompileAndInvokeIndependentResourceSets`,
 `ReportsEachInvalidResourceAndEmbeddingInOneBuild`,
 `ReportsMalformedReferenceResourceWithoutAspectCrash`, and
-`DescribesMissingRuntimeManifestAndResourceKey`. Its output names the deferred
+`DescribesMissingRuntimeManifestAndResourceKey`, plus six `LocalizedResourceConsumerTests`:
+`CanInvokeSatelliteResourcesWithDefaultAndExplicitCulture`,
+`RejectsUnsupportedLocalizedResourceCultureCasing`,
+`CanInvokeCanonicalAndLowercaseLocalizedResourceCultures`,
+`RejectsInconsistentLocalizedResourcesOutsideExpectedCultures`,
+`ReportsMissingAndInvalidExpectedCultures`, and
+`RejectsLocalizedResourcesWithoutStandardSatelliteEmbedding`. Its output names the deferred
 tests. Fast success does not verify generation or runtime lookup end to end.
 Full applies no filter; the standard solution-level `dotnet test` command above
 also continues to select every test.
 
 Each entry point propagates test failures and checks the passed TRX identities
-against the fixed inventory (25 fast, 29 full), rejecting
+against the fixed inventory (29 fast, 39 full), rejecting
 empty, skipped, missing, duplicate, or unexpected selections. Adding or renaming
 tests requires reviewing and updating that inventory in `tests/run.ps1`.
 Unique TRX directories under ignored `test-results/execution/` prevent stale
