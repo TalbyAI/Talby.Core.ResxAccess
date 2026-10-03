@@ -4,7 +4,8 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Talby.Core.ResxAccess.ConsumerFixture/Talby.Core.ResxAccess.ConsumerFixture.csproj" />
-    <Project Path="tests/Talby.Core.ResxAccess.Tests/Talby.Core.ResxAccess.Tests.csproj" />
+    <Project Path="tests/Talby.Core.ResxAccess.UnitTests/Talby.Core.ResxAccess.UnitTests.csproj" />
+    <Project Path="tests/Talby.Core.ResxAccess.IntegrationTests/Talby.Core.ResxAccess.IntegrationTests.csproj" />
     <Project Path="tests/Talby.Core.ResxAccess.AspectTests/Talby.Core.ResxAccess.AspectTests.csproj" />
   </Folder>
 </Solution>

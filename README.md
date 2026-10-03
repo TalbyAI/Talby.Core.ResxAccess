@@ -65,13 +65,26 @@ dotnet build Talby.Core.ResxAccess.slnx --configuration Release --no-restore
 dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-restore
 ```
 
-### Fast/full execution experiment (pending review)
+The solution contains three test projects:
 
-The candidate entry points require PowerShell 7 (`pwsh`) and the Release restore
+- `Talby.Core.ResxAccess.UnitTests`: 18 tests of Metalama setup and shared Reference Resource validation.
+- `Talby.Core.ResxAccess.IntegrationTests`: four SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
+- `Talby.Core.ResxAccess.AspectTests`: seven dedicated Metalama snapshot tests.
+
+Run either ordinary test project independently after the solution build:
+
+```powershell
+dotnet test tests/Talby.Core.ResxAccess.UnitTests/Talby.Core.ResxAccess.UnitTests.csproj --configuration Release --no-build --no-restore
+dotnet test tests/Talby.Core.ResxAccess.IntegrationTests/Talby.Core.ResxAccess.IntegrationTests.csproj --configuration Release --no-build --no-restore
+```
+
+### Fast/full execution
+
+The entry points require PowerShell 7 (`pwsh`) and the Release restore
 and solution build above. Rebuild after changing source, resources, or fixtures;
 both commands deliberately use `--no-build --no-restore`. Fast still requires
-building both test projects, the library, and the consumer fixture in the
-precompiled-fixture candidate below.
+the Release solution build above, including all three test projects, the library,
+and the consumer fixture.
 
 ```powershell
 # During local iteration: unit tests and all AspectTests.
@@ -81,7 +94,8 @@ pwsh -NoProfile -File tests/run.ps1 -Mode fast
 pwsh -NoProfile -File tests/run.ps1 -Mode full
 ```
 
-Fast uses `Category!=Integration` and defers all four `RawTextConsumerTests`:
+Fast selects the UnitTests and AspectTests projects and defers the IntegrationTests
+project with all four `RawTextConsumerTests`:
 `CanCompileAndInvokeIndependentResourceSets`,
 `ReportsEachInvalidResourceAndEmbeddingInOneBuild`,
 `ReportsMalformedReferenceResourceWithoutAspectCrash`, and
@@ -91,7 +105,7 @@ Full applies no filter; the standard solution-level `dotnet test` command above
 also continues to select every test.
 
 Each entry point propagates test failures and checks the passed TRX identities
-against the candidate's fixed inventory (25 fast, 29 full), rejecting
+against the fixed inventory (25 fast, 29 full), rejecting
 empty, skipped, missing, duplicate, or unexpected selections. Adding or renaming
 tests requires reviewing and updating that inventory in `tests/run.ps1`.
 Unique TRX directories under ignored `test-results/execution/` prevent stale
@@ -111,10 +125,14 @@ exit $LASTEXITCODE
 No CI provider is configured, so this requirement is documented rather than
 automatically enforced. The [experiment report](.scratch/test-policy/results/01-execution.md)
 contains measurements, selection checks, and the unchanged assertion inventory.
-This candidate awaits user review before adoption; it does not establish the
-final test classification policy.
+Experiment 01 was merged in PR #1. The project split retains its optional local
+fast route and complete verification gate; it does not establish a permanent
+test classification policy or demonstrate a performance improvement. The
+[project split report](.scratch/test-policy/results/04-project-split.md) maps
+test identities and assertions and records verification.
 
-The solution contains the library, ordinary xUnit tests, and a dedicated
+The solution contains the library, UnitTests, IntegrationTests, ConsumerFixture,
+and a dedicated
 `Metalama.Testing.AspectTesting` 2026.1.28 snapshot project with automatic
 file-based discovery. Ordinary tests keep `MetalamaEnabled=false`; the library
 keeps `MetalamaRemoveCompileTimeOnlyCode=false`.
@@ -123,7 +141,7 @@ keeps `MetalamaRemoveCompileTimeOnlyCode=false`.
 
 `Talby.Core.ResxAccess.ConsumerFixture` is a real SDK executable built with the
 solution. Metalama processes its aspects; ordinary tests still keep
-`MetalamaEnabled=false`. The test project references the fixture so its assembly,
+`MetalamaEnabled=false`. IntegrationTests references the fixture so its assembly,
 runtime configuration, and satellite assemblies are copied to the test output.
 Runtime tests invoke that output in three fresh processes, retaining culture and
 process isolation without rebuilding a consumer for each scenario.
@@ -145,8 +163,8 @@ The user approved this candidate on 2026-10-03; it was merged in PR #2.
 
 The stock snapshot runner does not forward the consumer project path or resource
 map, even when resource files and the targets import are present in its project.
-`UnavailableProjectContext` records this limitation. The shared-logic candidate
-adds seventeen unit tests of internal production helpers and four AspectTests
+`UnavailableProjectContext` records this limitation. Experiment 03, merged in
+PR #3, added seventeen unit tests of internal production helpers and four AspectTests
 using deterministic XML/resource-map inputs. The adapter delegates to the
 original production helper source through supported `@Include` directives;
 generated Raw Text snapshots use the attribute's compiled templates. A
@@ -157,8 +175,8 @@ All original consumer assertions remain in full. Fast checks shared validation
 and generated templates, but cannot establish SDK wiring, embedding, associated
 manifest naming, or runtime lookup. The [shared-logic report](.scratch/test-policy/results/03-aspect-logic.md)
 records adapter limitations, assertion mapping, negative controls, and paired
-timings. This candidate awaits user review and does not establish a permanent
-test classification policy. No custom snapshot runner or public testing API is
+timings. Its historical evidence does not establish a permanent test
+classification policy. No custom snapshot runner or public testing API is
 required.
 
 Relevant upstream documentation: [SDK resource manifest names](https://learn.microsoft.com/en-us/dotnet/core/resources/manifest-file-names)

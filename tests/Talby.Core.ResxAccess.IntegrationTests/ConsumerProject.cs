@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Security;
 
-namespace Talby.Core.ResxAccess.Tests;
+namespace Talby.Core.ResxAccess.IntegrationTests;
 
 internal sealed class ConsumerProject : IDisposable
 {
