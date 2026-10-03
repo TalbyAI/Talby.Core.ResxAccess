@@ -1,5 +1,6 @@
 namespace Talby.Core.ResxAccess.Tests;
 
+[Trait("Category", "Integration")]
 public class RawTextConsumerTests
 {
     internal const string ReferenceResource = """
