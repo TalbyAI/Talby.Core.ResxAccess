@@ -8,9 +8,11 @@
 ## Project Structure & Module Organization
 
 - `Talby.Core.ResxAccess.slnx` groups the library and test projects.
-- `src/Talby.Core.ResxAccess/` contains the .NET 10 library, which references `Metalama.Framework`. It currently has no implemented library functionality.
-- `tests/Talby.Core.ResxAccess.Tests/` contains xUnit tests and references the library. `MetalamaSetupTests.cs` demonstrates creating and querying a Metalama compilation.
-- `global.json` selects the SDK; `README.md` documents setup in Spanish. No resource assets are currently checked in.
+- `src/Talby.Core.ResxAccess/` contains the .NET 10 library and references `Metalama.Framework`.
+- `tests/Talby.Core.ResxAccess.UnitTests/` contains `MetalamaSetupTests` and `ReferenceResourceTests`, including tests of internal compile-time helpers.
+- `tests/Talby.Core.ResxAccess.IntegrationTests/` contains all four `RawTextConsumerTests` and the `ConsumerProject` helper, and references the precompiled ConsumerFixture.
+- `tests/Talby.Core.ResxAccess.AspectTests/` contains the dedicated Metalama snapshot tests; `tests/Talby.Core.ResxAccess.ConsumerFixture/` contains the real SDK consumer executable and its resource assets.
+- `global.json` selects the SDK; `README.md` documents setup and test execution in English.
 
 ## Build, Test, and Development Commands
 
@@ -22,17 +24,26 @@ dotnet build Talby.Core.ResxAccess.slnx --configuration Release --no-restore
 dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-restore
 ```
 
-These commands restore dependencies, compile both projects, and execute tests in sequence. Rebuild after code changes before using `--no-build`. This repository contains a library, so there is no application to launch locally.
+These commands restore dependencies and compile all five solution projects, then execute all three test projects. Rebuild after code changes before using `--no-build`. This repository contains a library, so there is no application to launch locally.
+
+For independent UnitTests or IntegrationTests execution after the solution build:
+
+```powershell
+dotnet test tests/Talby.Core.ResxAccess.UnitTests/Talby.Core.ResxAccess.UnitTests.csproj --configuration Release --no-build --no-restore
+dotnet test tests/Talby.Core.ResxAccess.IntegrationTests/Talby.Core.ResxAccess.IntegrationTests.csproj --configuration Release --no-build --no-restore
+```
+
+The PowerShell 7 runner `pwsh -NoProfile -File tests/run.ps1 -Mode fast` selects UnitTests and AspectTests, deferring IntegrationTests. Use `-Mode full` before merge to execute all 29 tests and validate the inventory. Update `tests/run.ps1` when adding or renaming tests.
 
 ## Coding Style & Naming Conventions
 
-Follow the existing C# style: four-space indentation, file-scoped namespaces, and braces on separate lines. Use PascalCase for types and methods, camelCase for parameters and local variables, and descriptive filenames matching their primary types. Both projects enable nullable reference types and implicit usings; preserve these settings. Project XML uses two-space indentation. No repository-specific formatter or lint configuration is present.
+Follow the existing C# style: four-space indentation, file-scoped namespaces, and braces on separate lines. Use PascalCase for types and methods, camelCase for parameters and local variables, and descriptive filenames matching their primary types. All projects enable nullable reference types and implicit usings; preserve these settings. Project XML uses two-space indentation. No repository-specific formatter or lint configuration is present.
 
 ## Testing Guidelines
 
 Use xUnit `[Fact]` tests with descriptive PascalCase method names, such as `CanCreateAndQueryCompilation`, in `*Tests.cs` files. For Metalama code-model tests, follow the existing `UnitTestClass` and disposable `CreateTestContext()` pattern. Add focused tests for new behavior and bug fixes. No coverage threshold is configured.
 
-Keep `MetalamaEnabled=false` in the test project and `MetalamaRemoveCompileTimeOnlyCode=false` in the library; these settings support testing compile-time helpers.
+Keep `MetalamaEnabled=false` in UnitTests and IntegrationTests and `MetalamaRemoveCompileTimeOnlyCode=false` in the library; these settings support testing compile-time helpers. Keep the Metalama UnitTesting dependency and library internals access in UnitTests; keep the ConsumerFixture reference in IntegrationTests.
 
 ## Commit & Pull Request Guidelines
 

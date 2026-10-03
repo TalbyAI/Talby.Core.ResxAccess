@@ -4,20 +4,21 @@ Status: ready-for-human
 
 ## Goal and review boundary
 
-Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. An additional task separates unit tests and integration tests into explicitly named projects. Implementation requires an explicit request; delivering a candidate does not establish a permanent test classification policy. Experiments 01 and 02 are now part of merged main. Experiment 03 is implemented as a candidate for user review. Task 04 remains planned for separate implementation.
+Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. An additional task separates unit tests and integration tests into explicitly named projects. Implementation requires an explicit request; delivering a candidate does not establish a permanent test classification policy. Experiments 01, 02, and 03 are now part of merged main. Task 04 is implemented for review against that approved baseline.
 
 | Issue | Previous option | Experiment | Main question | Progress |
 | --- | --- | --- | --- | --- |
 | [01](issues/01-separate-fast-and-full-execution.md) | 2 | Separate fast and full execution | How much local feedback time is saved by deferring integration tests? | Merged in PR #1; [historical results](results/01-execution.md) |
 | [02](issues/02-precompile-consumer-fixtures.md) | 3 | Precompile consumer fixtures | Does removing builds from runtime tests reduce the complete development cycle? | Merged in PR #2; [historical results](results/02-fixtures.md) |
-| [03](issues/03-share-testable-aspect-logic.md) | 4 | Share testable aspect logic | Can broader fast coverage validate production logic while SDK smoke tests retain the integration boundary? | Candidate for user review; [results](results/03-aspect-logic.md) |
-| [04](issues/04-separate-unit-and-integration-test-projects.md) | Additional task | Separate unit and integration test projects | Can project boundaries make unit and integration execution explicit while preserving every scenario? | Planned; not started |
+| [03](issues/03-share-testable-aspect-logic.md) | 4 | Share testable aspect logic | Can broader fast coverage validate production logic while SDK smoke tests retain the integration boundary? | Merged in PR #3; [historical results](results/03-aspect-logic.md) |
+| [04](issues/04-separate-unit-and-integration-test-projects.md) | Additional task | Separate unit and integration test projects | Can project boundaries make unit and integration execution explicit while preserving every scenario? | Implemented for review; [results](results/04-project-split.md) |
 
 Recommended evaluation order: 01, then 02, then 03. Keep each candidate independently reviewable and revertible. Start each from the latest approved baseline; do not include an unapproved candidate in the next change set. Rejecting one experiment does not prevent evaluating the others against the retained baseline.
 
 Task 04 is a separate project-organization task, with no mandatory dependency on
 experiments 02 or 03. Implement it from the latest approved baseline after an
-explicit implementation request; this pull request records its scope only.
+explicit implementation request. The user requested implementation on 2026-10-03;
+its approved baseline is `f102675`, the merge of PR #3.
 
 ## Current evidence
 
@@ -105,7 +106,8 @@ process/culture isolation, and the loss of a fresh project build per runtime
 scenario. The user approved this tradeoff and candidate `bd9ce04` on 2026-10-03.
 It was subsequently merged in PR #2 at `9a0aa8b`. The experiment 02 report
 preserves its historical integration handoff. Experiment 03 now has its own
-candidate report; Task 04 remains separately planned.
+candidate report, retained as historical evidence after the merge of PR #3.
+Task 04 has its own project split report.
 
 ## Experiment 03 review handoff
 
@@ -126,7 +128,8 @@ demonstrate validation, generated-template, and SDK-wiring sensitivity.
 Broader fast protection does not itself establish a speed improvement or
 equivalent SDK coverage. Measurements, assertion mapping, limitations, and the
 recommendation are in the report. Adoption and permanent test classification
-remain user decisions; this candidate has not been merged.
+remain user decisions. Experiment 03 was subsequently merged in PR #3 at
+`f102675`; its report preserves the historical candidate measurements.
 
 ## Additional task 04: separate unit and integration test projects
 
@@ -140,9 +143,10 @@ Expected layout:
 
 ```text
 tests/
-├── Talby.Core.ResxAccess.UnitTests/          # MetalamaSetupTests
+├── Talby.Core.ResxAccess.UnitTests/          # MetalamaSetupTests + ReferenceResourceTests
 ├── Talby.Core.ResxAccess.IntegrationTests/   # RawTextConsumerTests + ConsumerProject
 ├── Talby.Core.ResxAccess.AspectTests/        # existing snapshot tests
+├── Talby.Core.ResxAccess.ConsumerFixture/    # approved SDK fixture
 └── run.ps1                                 # update paths and test identities if adopted
 ```
 
@@ -157,6 +161,13 @@ Verify each ordinary test project independently and the complete Release suite.
 [Task 04](issues/04-separate-unit-and-integration-test-projects.md) contains the
 implementation acceptance criteria. This task changes project organization;
 the performance measurement protocol below applies to experiments 01–03.
+
+The [project split report](results/04-project-split.md) records the implementation,
+independent project checks, selection guard controls, and unchanged assertion
+coverage. All 29 tests from approved baseline `f102675` are retained: 18 UnitTests,
+four IntegrationTests, and seven AspectTests. Fast selects UnitTests and AspectTests
+by project; full continues to invoke the entire solution. Historical reports and
+their recorded test identities are unchanged. No performance gain is claimed.
 
 ## Shared measurement protocol
 

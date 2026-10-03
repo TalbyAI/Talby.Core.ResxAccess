@@ -1,4 +1,4 @@
-namespace Talby.Core.ResxAccess.Tests;
+namespace Talby.Core.ResxAccess.UnitTests;
 
 public class ReferenceResourceTests
 {

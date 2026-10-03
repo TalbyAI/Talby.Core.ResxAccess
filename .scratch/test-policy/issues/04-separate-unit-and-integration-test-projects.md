@@ -1,6 +1,6 @@
 # Separate unit and integration test projects
 
-Status: ready-for-agent
+Status: ready-for-human
 Type: task
 Previous option: Additional task
 
@@ -29,13 +29,13 @@ of their recorded baseline.
 
 ## Acceptance criteria
 
-- [ ] Create IntegrationTests and rename the existing Tests project to UnitTests, including directories, `.csproj` filenames, namespaces, and assembly identities. Remove obsolete solution entries and active references to the old project path.
-- [ ] Keep `MetalamaSetupTests` in UnitTests. Move all four `RawTextConsumerTests` and `ConsumerProject` into IntegrationTests without changing their scenarios, assertions, culture restoration, temporary-project isolation, or failure reporting.
-- [ ] Preserve the dedicated AspectTests project and its snapshots. Retain .NET 10, nullable reference types, implicit usings, `MetalamaEnabled=false` in both ordinary projects, and `MetalamaRemoveCompileTimeOnlyCode=false` in the library.
-- [ ] Update `Talby.Core.ResxAccess.slnx`, required project references, README, and repository test instructions. A standard solution-level Release test command must continue to select the complete suite.
-- [ ] Verify UnitTests and IntegrationTests independently. Map old and new discovered identities, accounting for namespace changes; preserve all eight current tests, including the three AspectTests, if implemented against the current baseline. Account explicitly for any tests added by previously approved work.
-- [ ] If the fast/full runner is adopted, fast selects UnitTests plus AspectTests and excludes IntegrationTests; full selects every test. Update the inventory and verify that missing or unexpected selections still fail.
-- [ ] Run restore, a clean Release solution build, and the full suite successfully. Record the commands, results, and assertion mapping for review. A project split alone does not establish a performance improvement or authorize dropping integration coverage.
+- [x] Create IntegrationTests and rename the existing Tests project to UnitTests, including directories, `.csproj` filenames, namespaces, and assembly identities. Remove obsolete solution entries and active references to the old project path.
+- [x] Keep `MetalamaSetupTests` in UnitTests. Move all four `RawTextConsumerTests` and `ConsumerProject` into IntegrationTests without changing their scenarios, assertions, culture restoration, temporary-project isolation, or failure reporting.
+- [x] Preserve the dedicated AspectTests project and its snapshots. Retain .NET 10, nullable reference types, implicit usings, `MetalamaEnabled=false` in both ordinary projects, and `MetalamaRemoveCompileTimeOnlyCode=false` in the library.
+- [x] Update `Talby.Core.ResxAccess.slnx`, required project references, README, and repository test instructions. A standard solution-level Release test command must continue to select the complete suite.
+- [x] Verify UnitTests and IntegrationTests independently. Map old and new discovered identities, accounting for namespace changes; preserve all eight current tests, including the three AspectTests, if implemented against the current baseline. Account explicitly for any tests added by previously approved work.
+- [x] If the fast/full runner is adopted, fast selects UnitTests plus AspectTests and excludes IntegrationTests; full selects every test. Update the inventory and verify that missing or unexpected selections still fail.
+- [x] Run restore, a clean Release solution build, and the full suite successfully. Record the commands, results, and assertion mapping for review. A project split alone does not establish a performance improvement or authorize dropping integration coverage.
 
 ## Blocked by
 
@@ -48,3 +48,14 @@ requires a separate explicit request.
 2026-10-03: Requested as an additional task in the spec within the current pull
 request. This change records the project split for later implementation; it does
 not rename or create test projects in the current candidate.
+
+2026-10-03: Implemented after the user's explicit request, starting from approved
+main `f102675` (PR #3 merged). UnitTests retains the setup test and seventeen
+ReferenceResourceTests; IntegrationTests retains all four consumer tests and
+ConsumerProject; all seven AspectTests and the SDK fixture remain unchanged.
+The [project split report](../results/04-project-split.md) and
+[identity mapping](../results/04-identities.csv) record commands, namespace-only
+source comparison, assertion preservation, independent 18/4 passes, fast 25/25,
+full 29/29, and two reverted inventory guard controls. Clean Release build passed
+with zero warnings/errors. Ready for human review; no performance gain or permanent
+classification policy is claimed.

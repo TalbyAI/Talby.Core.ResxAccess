@@ -1,4 +1,4 @@
-namespace Talby.Core.ResxAccess.Tests;
+namespace Talby.Core.ResxAccess.IntegrationTests;
 
 [Trait("Category", "Integration")]
 public class RawTextConsumerTests

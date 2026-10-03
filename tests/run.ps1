@@ -12,9 +12,9 @@ $integration = @(
     'ReportsEachInvalidResourceAndEmbeddingInOneBuild'
     'ReportsMalformedReferenceResourceWithoutAspectCrash'
     'DescribesMissingRuntimeManifestAndResourceKey'
-) | ForEach-Object { "Talby.Core.ResxAccess.Tests.RawTextConsumerTests.$_" }
+) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.RawTextConsumerTests.$_" }
 $fast = @(
-    'Talby.Core.ResxAccess.Tests.MetalamaSetupTests.CanCreateAndQueryCompilation'
+    'Talby.Core.ResxAccess.UnitTests.MetalamaSetupTests.CanCreateAndQueryCompilation'
     'InvalidPaths'
     'UnavailableProjectContext'
     'UnsupportedTargets'
@@ -41,25 +41,33 @@ $fast += @(
     'RejectsCultureSpecificSdkMetadata'
     'MatchesResourceMapPathsUsingPlatformComparison'
     'RecognizesKeywordAndUnicodeResourceKeyIdentifiers'
-) | ForEach-Object { "Talby.Core.ResxAccess.Tests.ReferenceResourceTests.$_" }
+) | ForEach-Object { "Talby.Core.ResxAccess.UnitTests.ReferenceResourceTests.$_" }
 $expected = if ($Mode -eq 'fast') { $fast } else { $fast + $integration }
 $results = Join-Path $root "test-results/execution/$Mode-$([Guid]::NewGuid().ToString('N'))"
 $arguments = @(
-    'test', 'Talby.Core.ResxAccess.slnx', '--configuration', 'Release', '--no-build', '--no-restore'
+    '--configuration', 'Release', '--no-build', '--no-restore'
     '--verbosity', 'normal', '--logger', 'trx;LogFilePrefix=execution', '--results-directory', $results
 )
-if ($Mode -eq 'fast')
+$projects = if ($Mode -eq 'fast')
 {
-    $arguments += '--filter', 'Category!=Integration'
     Write-Host "FAST: deferring $($integration.Count) integration tests (SDK embedding and runtime lookup are not checked):"
     $integration | ForEach-Object { Write-Host "  $_" }
+    'tests/Talby.Core.ResxAccess.UnitTests/Talby.Core.ResxAccess.UnitTests.csproj'
+    'tests/Talby.Core.ResxAccess.AspectTests/Talby.Core.ResxAccess.AspectTests.csproj'
+}
+else
+{
+    'Talby.Core.ResxAccess.slnx'
 }
 
 Push-Location $root
 try
 {
-    & dotnet @arguments
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    foreach ($project in $projects)
+    {
+        & dotnet test $project @arguments
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
 
     $executed = @(Get-ChildItem -LiteralPath $results -Filter '*.trx' | ForEach-Object {
         [xml] $trx = Get-Content -LiteralPath $_.FullName -Raw
