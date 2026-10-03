@@ -92,7 +92,6 @@ internal static class ReferenceResourceReader
             }
 
             var culture = name.Substring(prefix.Length);
-            discoveredCultures.Add(culture);
             var localizedResource = Path.Combine(Path.GetDirectoryName(referenceResource) ?? "", Path.GetFileName(localizedPath)).Replace('\\', '/');
             try
             {
@@ -100,6 +99,11 @@ internal static class ReferenceResourceReader
                     !string.Equals(culture, canonicalCulture.ToLowerInvariant(), StringComparison.Ordinal))
                 {
                     throw new ResourceValidationException($"'{localizedResource}' must use the canonical Resource Culture suffix '{canonicalCulture}' or its lowercase form for runtime satellite probing.");
+                }
+
+                if (!discoveredCultures.Add(culture))
+                {
+                    throw new ResourceValidationException($"'{localizedResource}' is a duplicate Localized Resource for Resource Culture '{canonicalCulture}'. Only one Localized Resource per Resource Culture is allowed.");
                 }
 
                 var localizedKeys = ReadKeys(localizedPath, localizedResource);

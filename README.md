@@ -37,7 +37,9 @@ using its base name followed by a recognized culture suffix (for example,
 `Labels.es.resx`). Every discovered Localized Resource must contain exactly the
 Reference Resource's case-sensitive Resource Keys and use standard SDK satellite
 embedding. Duplicate keys and non-text entries are rejected in both kinds of
-resource, including keys that do not receive generated methods. Empty and
+resource, including keys that do not receive generated methods. A Resource Set
+cannot contain multiple Localized Resources for the same Resource Culture,
+including filenames differing only in casing on a case-sensitive file system. Empty and
 whitespace-only text remains valid and is returned unchanged.
 
 Localized Resource filename suffixes must use canonical Resource Culture casing
@@ -88,7 +90,7 @@ dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-r
 
 The solution contains three test projects:
 
-- `Talby.Core.ResxAccess.UnitTests`: 18 tests of Metalama setup and shared Reference Resource validation.
+- `Talby.Core.ResxAccess.UnitTests`: 19 tests of Metalama setup and shared Reference Resource validation.
 - `Talby.Core.ResxAccess.IntegrationTests`: ten SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
 - `Talby.Core.ResxAccess.AspectTests`: ten dedicated Metalama snapshot tests.
 
@@ -135,7 +137,7 @@ Full applies no filter; the standard solution-level `dotnet test` command above
 also continues to select every test.
 
 Each entry point propagates test failures and checks the passed TRX identities
-against the fixed inventory (28 fast, 38 full), rejecting
+against the fixed inventory (29 fast, 39 full), rejecting
 empty, skipped, missing, duplicate, or unexpected selections. Adding or renaming
 tests requires reviewing and updating that inventory in `tests/run.ps1`.
 Unique TRX directories under ignored `test-results/execution/` prevent stale

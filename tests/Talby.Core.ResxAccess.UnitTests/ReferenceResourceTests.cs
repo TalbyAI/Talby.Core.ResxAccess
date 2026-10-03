@@ -33,6 +33,36 @@ public class ReferenceResourceTests
     }
 
     [Fact]
+    public void RejectsDuplicateLocalizedResourceCultures()
+    {
+        foreach (var duplicateName in new[] { "Labels.es-MX.RESX", "Labels.es-mx.resx" })
+        {
+            using var resource = new ResourceInput("<root />");
+            var directory = Path.GetDirectoryName(resource.ResourcePath)!;
+            var localizedPath = Path.Combine(directory, "Labels.es-MX.resx");
+            File.WriteAllText(localizedPath, "<root />");
+            File.AppendAllText(resource.MapPath, $"\n{localizedPath}|ConsumerRoot.Resources.Labels.es-MX||||true");
+            Assert.Empty(resource.Read().Keys);
+
+            var duplicatePath = Path.Combine(directory, duplicateName);
+            File.WriteAllText(duplicatePath, "<root />");
+            File.AppendAllText(resource.MapPath, $"\n{duplicatePath}|ConsumerRoot.Resources.Labels.{Path.GetFileNameWithoutExtension(duplicateName)["Labels.".Length..]}||||true");
+
+            // Case-insensitive file systems retain one file when the spelling changes.
+            if (Directory.GetFiles(directory).Length == 2)
+            {
+                Assert.Empty(resource.Read().Keys);
+                continue;
+            }
+
+            var error = Assert.Throws<ResourceValidationException>(() => resource.Read());
+            Assert.True(error.LocalizedResource);
+            Assert.Contains("'Resources/Labels.es-", error.Message);
+            Assert.Contains("duplicate Localized Resource for Resource Culture 'es-MX'", error.Message);
+        }
+    }
+
+    [Fact]
     public void RejectsMalformedXmlWithoutAnUnhandledXmlException()
     {
         using var resource = new ResourceInput("<root><data>");

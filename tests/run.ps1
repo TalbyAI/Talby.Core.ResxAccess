@@ -38,6 +38,7 @@ $fast += @(
     'ReadsTextEntriesAndSdkManifestName'
     'AcceptsExplicitStringTypesEmptyValuesAndCaseSensitiveKeys'
     'AcceptsAnEmptyReferenceResource'
+    'RejectsDuplicateLocalizedResourceCultures'
     'RejectsMalformedXmlWithoutAnUnhandledXmlException'
     'RejectsInvalidRootElements'
     'RejectsDuplicateOrUnnamedResourceKeys'
