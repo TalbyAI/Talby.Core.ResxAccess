@@ -33,7 +33,7 @@ dotnet test tests/Talby.Core.ResxAccess.UnitTests/Talby.Core.ResxAccess.UnitTest
 dotnet test tests/Talby.Core.ResxAccess.IntegrationTests/Talby.Core.ResxAccess.IntegrationTests.csproj --configuration Release --no-build --no-restore
 ```
 
-The PowerShell 7 runner `pwsh -NoProfile -File tests/run.ps1 -Mode fast` selects UnitTests and AspectTests, deferring IntegrationTests. Use `-Mode full` before merge to execute all 36 tests and validate the inventory. Update `tests/run.ps1` when adding or renaming tests.
+The PowerShell 7 runner `pwsh -NoProfile -File tests/run.ps1 -Mode fast` selects UnitTests and AspectTests, deferring IntegrationTests. Use `-Mode full` before merge to execute all 38 tests and validate the inventory. Update `tests/run.ps1` when adding or renaming tests.
 
 ## Coding Style & Naming Conventions
 

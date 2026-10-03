@@ -14,6 +14,69 @@ public class LocalizedResourceConsumerTests
     }
 
     [Fact]
+    public async Task RejectsUnsupportedLocalizedResourceCultureCasing()
+    {
+        using var consumer = new ConsumerProject("Console.WriteLine(\"Unused\");");
+        var cases = new[]
+        {
+            (Target: "Uppercase", Culture: "ES", CanonicalCulture: "es"),
+            (Target: "MixedCase", Culture: "Es-MX", CanonicalCulture: "es-MX"),
+            (Target: "MixedRegion", Culture: "es-mX", CanonicalCulture: "es-MX")
+        };
+        foreach (var (target, culture, _) in cases)
+        {
+            consumer.Write($"{target}.cs", $$"""
+                using Talby.Core.ResxAccess;
+                [GenerateResxAccess("Resources/{{target}}.resx")]
+                public static class {{target}}
+                {
+                }
+                """);
+            consumer.Write($"Resources/{target}.resx", RawTextConsumerTests.ReferenceResource);
+            consumer.Write($"Resources/{target}.{culture}.resx", RawTextConsumerTests.ReferenceResource);
+        }
+
+        var build = await consumer.Build();
+
+        Assert.NotEqual(0, build.ExitCode);
+        foreach (var (target, culture, canonicalCulture) in cases)
+        {
+            Assert.True(build.Output.Split('\n').Any(line => line.Contains($"{target}.cs(", StringComparison.Ordinal)
+                && line.Contains($"error TRESX004: Invalid Localized Resource: 'Resources/{target}.{culture}.resx' must use the canonical Resource Culture suffix '{canonicalCulture}' or its lowercase form for runtime satellite probing.", StringComparison.Ordinal)), build.Output);
+        }
+        Assert.DoesNotContain("LAMA0041", build.Output);
+    }
+
+    [Fact]
+    public async Task CanInvokeCanonicalAndLowercaseLocalizedResourceCultures()
+    {
+        using var consumer = new ConsumerProject("""
+            using System.Globalization;
+            Console.WriteLine(Canonical.Plain(CultureInfo.GetCultureInfo("es-MX")));
+            Console.WriteLine(Lowercase.Plain(CultureInfo.GetCultureInfo("es-MX")));
+            """);
+        foreach (var (target, culture) in new[] { ("Canonical", "es-MX"), ("Lowercase", "es-mx") })
+        {
+            consumer.Write($"{target}.cs", $$"""
+                using Talby.Core.ResxAccess;
+                [GenerateResxAccess("Resources/{{target}}.resx", ExpectedCultures = new[] { "ES-MX" })]
+                public static class {{target}}
+                {
+                }
+                """);
+            consumer.Write($"Resources/{target}.resx", RawTextConsumerTests.ReferenceResource);
+            consumer.Write($"Resources/{target}.{culture}.resx", RawTextConsumerTests.ReferenceResource.Replace("Just text", target));
+        }
+
+        var build = await consumer.Build();
+
+        Assert.True(build.ExitCode == 0, build.Output);
+        var invocation = await ConsumerProject.Invoke(Path.Combine(consumer.DirectoryPath, "bin/Release/net10.0/Consumer.dll"));
+        Assert.True(invocation.ExitCode == 0, invocation.Output);
+        Assert.Equal("Canonical\nLowercase\n", invocation.Output.Replace("\r\n", "\n"));
+    }
+
+    [Fact]
     public async Task RejectsInconsistentLocalizedResourcesOutsideExpectedCultures()
     {
         using var consumer = new ConsumerProject("Console.WriteLine(\"Unused\");");

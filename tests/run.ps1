@@ -15,6 +15,8 @@ $integration = @(
 ) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.RawTextConsumerTests.$_" }
 $integration += @(
     'CanInvokeSatelliteResourcesWithDefaultAndExplicitCulture'
+    'RejectsUnsupportedLocalizedResourceCultureCasing'
+    'CanInvokeCanonicalAndLowercaseLocalizedResourceCultures'
     'RejectsInconsistentLocalizedResourcesOutsideExpectedCultures'
     'ReportsMissingAndInvalidExpectedCultures'
     'RejectsLocalizedResourcesWithoutStandardSatelliteEmbedding'

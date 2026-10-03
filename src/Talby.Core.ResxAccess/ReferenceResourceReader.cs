@@ -71,10 +71,10 @@ internal static class ReferenceResourceReader
         }
 
         var keys = ReadKeys(resourcePath, referenceResource);
-        var cultureNames = new HashSet<string>(CultureInfo.GetCultures(CultureTypes.AllCultures).Where(c => c.Name.Length > 0).Select(c => c.Name), StringComparer.OrdinalIgnoreCase);
+        var cultureNames = CultureInfo.GetCultures(CultureTypes.AllCultures).Where(c => c.Name.Length > 0).Select(c => c.Name).ToDictionary(name => name, StringComparer.OrdinalIgnoreCase);
         foreach (var culture in expectedCultures ?? Array.Empty<string>())
         {
-            if (culture is null || !cultureNames.Contains(culture))
+            if (culture is null || !cultureNames.ContainsKey(culture))
             {
                 throw new ResourceValidationException($"ExpectedCultures contains invalid Resource Culture '{culture ?? "(null)"}'. Specify a non-empty culture name.", invalidExpectedCultures: true);
             }
@@ -86,15 +86,22 @@ internal static class ReferenceResourceReader
         {
             var name = Path.GetFileNameWithoutExtension(localizedPath);
             if (!string.Equals(Path.GetExtension(localizedPath), ".resx", StringComparison.OrdinalIgnoreCase) ||
-                !name.StartsWith(prefix, pathComparison) || !cultureNames.Contains(name.Substring(prefix.Length)))
+                !name.StartsWith(prefix, pathComparison) || !cultureNames.TryGetValue(name.Substring(prefix.Length), out var canonicalCulture))
             {
                 continue;
             }
 
-            discoveredCultures.Add(name.Substring(prefix.Length));
+            var culture = name.Substring(prefix.Length);
+            discoveredCultures.Add(culture);
             var localizedResource = Path.Combine(Path.GetDirectoryName(referenceResource) ?? "", Path.GetFileName(localizedPath)).Replace('\\', '/');
             try
             {
+                if (!string.Equals(culture, canonicalCulture, StringComparison.Ordinal) &&
+                    !string.Equals(culture, canonicalCulture.ToLowerInvariant(), StringComparison.Ordinal))
+                {
+                    throw new ResourceValidationException($"'{localizedResource}' must use the canonical Resource Culture suffix '{canonicalCulture}' or its lowercase form for runtime satellite probing.");
+                }
+
                 var localizedKeys = ReadKeys(localizedPath, localizedResource);
                 if (!keys.SetEquals(localizedKeys))
                 {
@@ -102,7 +109,7 @@ internal static class ReferenceResourceReader
                 }
 
                 var localizedMetadata = resourceMetadata.FirstOrDefault(parts => string.Equals(parts[0], localizedPath, pathComparison));
-                if (localizedMetadata is null || localizedMetadata[1] != metadata[1] + "." + name.Substring(prefix.Length) ||
+                if (localizedMetadata is null || localizedMetadata[1] != metadata[1] + "." + culture ||
                     localizedMetadata[2].Length > 0 || localizedMetadata[3].Length > 0 || localizedMetadata[4].Length > 0 ||
                     !string.Equals(localizedMetadata[5], "true", StringComparison.OrdinalIgnoreCase))
                 {
