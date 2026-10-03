@@ -119,7 +119,7 @@ The solution contains the library, ordinary xUnit tests, and a dedicated
 file-based discovery. Ordinary tests keep `MetalamaEnabled=false`; the library
 keeps `MetalamaRemoveCompileTimeOnlyCode=false`.
 
-### Precompiled consumer fixture experiment (pending review)
+### Precompiled consumer fixture experiment (approved)
 
 `Talby.Core.ResxAccess.ConsumerFixture` is a real SDK executable built with the
 solution. Metalama processes its aspects; ordinary tests still keep
@@ -141,7 +141,7 @@ Rebuild the solution after changing fixture source or `.resx` files before using
 assertions; run full to verify them. Fast/full selection and the required full
 verification gate remain unchanged. The [fixture experiment report](.scratch/test-policy/results/02-fixtures.md)
 records coverage, negative controls, build costs, and before/after measurements.
-This candidate requires user review before adoption.
+The user approved this candidate on 2026-10-03; integration is pending.
 
 The stock snapshot runner does not forward the consumer project path or resource
 map, even when resource files and the targets import are present in its project.

@@ -42,3 +42,7 @@ reverted; final Release solution build and all eight tests passed. The
 record assertion mapping, isolation changes, test-only/build costs, paired
 comparisons, and the review recommendation. Awaiting human review before
 adoption; no merge or permanent classification policy change is included.
+
+2026-10-03: The user approved candidate `bd9ce04` after reviewing the results.
+The review boundary for adoption is satisfied. Integration remains pending;
+`ready-for-human` now records that handoff rather than outstanding review.

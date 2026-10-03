@@ -1,6 +1,6 @@
 # Precompiled consumer fixture experiment
 
-Status: candidate pending user review; not adopted or merged.
+Status: approved by the user for adoption on 2026-10-03; integration pending.
 
 Origin: [issue 02](../issues/02-precompile-consumer-fixtures.md), following the
 [parent measurement protocol](../spec.md).
@@ -309,10 +309,11 @@ full verification before merge and rebuild after any fixture or resource change.
 The coverage mapping and negative controls support reviewing this candidate;
 passing tests do not constitute user approval.
 
-This change set is independently revertible against merged main. Do not merge,
-adopt it as policy, or base experiment 03 on it before user review. Task 04 is
-outside this implementation. No generated artifacts or temporary projects are
-included in the commit.
+The user approved candidate `bd9ce04` on 2026-10-03 after reviewing these results.
+The review boundary for adoption is satisfied; integration remains pending.
+This change set is independently revertible against merged main. Task 04 and
+permanent test classification instructions remain outside this implementation.
+No generated artifacts or temporary projects are included in the commit.
 
 ## Code review
 

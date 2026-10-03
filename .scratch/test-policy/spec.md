@@ -4,12 +4,12 @@ Status: ready-for-human
 
 ## Goal and review boundary
 
-Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. An additional task separates unit tests and integration tests into explicitly named projects. Implementation requires an explicit request; delivering a candidate does not establish a permanent test classification policy. Experiment 01 is now part of merged main. Experiment 02 has been implemented on request and awaits user review before adoption. Task 04 remains planned for separate implementation.
+Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. An additional task separates unit tests and integration tests into explicitly named projects. Implementation requires an explicit request; delivering a candidate does not establish a permanent test classification policy. Experiment 01 is now part of merged main. Experiment 02 has been approved by the user for adoption and awaits integration. Task 04 remains planned for separate implementation.
 
 | Issue | Previous option | Experiment | Main question | Progress |
 | --- | --- | --- | --- | --- |
 | [01](issues/01-separate-fast-and-full-execution.md) | 2 | Separate fast and full execution | How much local feedback time is saved by deferring integration tests? | Merged in PR #1; [historical results](results/01-execution.md) |
-| [02](issues/02-precompile-consumer-fixtures.md) | 3 | Precompile consumer fixtures | Does removing builds from runtime tests reduce the complete development cycle? | Implemented; [results](results/02-fixtures.md) awaiting user review |
+| [02](issues/02-precompile-consumer-fixtures.md) | 3 | Precompile consumer fixtures | Does removing builds from runtime tests reduce the complete development cycle? | Approved by user; integration pending; [results](results/02-fixtures.md) |
 | [03](issues/03-share-testable-aspect-logic.md) | 4 | Share testable aspect logic | Can broader fast coverage validate production logic while SDK smoke tests retain the integration boundary? | Not started |
 | [04](issues/04-separate-unit-and-integration-test-projects.md) | Additional task | Separate unit and integration test projects | Can project boundaries make unit and integration execution explicit while preserving every scenario? | Planned; not started |
 
@@ -23,7 +23,7 @@ explicit implementation request; this pull request records its scope only.
 
 Experiment 01 used approved baseline `7fa01ab`, which differs from the original planning baseline `62f653d` only in documentation. Its candidate was subsequently merged in PR #1 at `f05e9fa`; that synchronized main revision is the baseline for experiment 02. The historical report preserves the original candidate's measurements and review state.
 
-The experiment 02 candidate still discovers eight tests: five ordinary xUnit tests and three AspectTests. Four ordinary tests exercise consumers through one precompiled SDK fixture and two temporary failed SDK builds: one grouped diagnostic consumer and one malformed XML consumer. The merged baseline uses five temporary SDK builds for the same scenarios. Experiment 02 remains unapproved and is not the baseline for experiment 03.
+The experiment 02 candidate still discovers eight tests: five ordinary xUnit tests and three AspectTests. Four ordinary tests exercise consumers through one precompiled SDK fixture and two temporary failed SDK builds: one grouped diagnostic consumer and one malformed XML consumer. The merged baseline uses five temporary SDK builds for the same scenarios. The user approved experiment 02 candidate `bd9ce04` on 2026-10-03; integration remains pending.
 
 The [previous diagnosis](../test-performance/diagnosis.md) records full test command times of 16.02 s and 26.81 s after grouping. These historical samples demonstrate variation. Experiment 01 collected fresh measurements; experiments 02 and 03 must do the same against their latest approved baseline.
 
@@ -74,9 +74,9 @@ integration feedback is acceptable, while retaining the full verification gate.
 Experiment 01 was subsequently merged into main in PR #1. Its recorded
 measurements remain historical evidence; the merge does not establish a
 permanent test classification policy. The parent status now records experiment
-02's human review handoff, not completion of all three experiments.
+02's integration handoff, not completion of all three experiments.
 
-## Experiment 02 results and review handoff
+## Experiment 02 results and approval
 
 The [fixture report](results/02-fixtures.md) and [raw timings](results/02-timings.csv)
 record 52 observations collected on 2026-10-03: eight excluded warm-ups, forty
@@ -102,8 +102,9 @@ zero warnings/errors and standard solution execution passed all eight tests.
 
 The report maps moved assertions, shared prerequisite compilation, retained
 process/culture isolation, and the loss of a fresh project build per runtime
-scenario. Review this tradeoff before adopting the candidate or basing experiment
-03 on it. Task 04 remains separately planned.
+scenario. The user approved this tradeoff and candidate `bd9ce04` on 2026-10-03.
+The review boundary for adoption is satisfied; integration remains pending.
+Experiment 03 is unstarted and Task 04 remains separately planned.
 
 ## Additional task 04: separate unit and integration test projects
 
