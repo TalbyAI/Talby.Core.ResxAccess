@@ -4,13 +4,13 @@ Status: ready-for-human
 
 ## Goal and review boundary
 
-Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. An additional task separates unit tests and integration tests into explicitly named projects. Implementation requires an explicit request; delivering a candidate does not establish a permanent test classification policy. Experiment 01 is now part of merged main. Experiment 02 has been approved by the user for adoption and awaits integration. Task 04 remains planned for separate implementation.
+Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. An additional task separates unit tests and integration tests into explicitly named projects. Implementation requires an explicit request; delivering a candidate does not establish a permanent test classification policy. Experiments 01 and 02 are now part of merged main. Experiment 03 is implemented as a candidate for user review. Task 04 remains planned for separate implementation.
 
 | Issue | Previous option | Experiment | Main question | Progress |
 | --- | --- | --- | --- | --- |
 | [01](issues/01-separate-fast-and-full-execution.md) | 2 | Separate fast and full execution | How much local feedback time is saved by deferring integration tests? | Merged in PR #1; [historical results](results/01-execution.md) |
-| [02](issues/02-precompile-consumer-fixtures.md) | 3 | Precompile consumer fixtures | Does removing builds from runtime tests reduce the complete development cycle? | Approved by user; integration pending; [results](results/02-fixtures.md) |
-| [03](issues/03-share-testable-aspect-logic.md) | 4 | Share testable aspect logic | Can broader fast coverage validate production logic while SDK smoke tests retain the integration boundary? | Not started |
+| [02](issues/02-precompile-consumer-fixtures.md) | 3 | Precompile consumer fixtures | Does removing builds from runtime tests reduce the complete development cycle? | Merged in PR #2; [historical results](results/02-fixtures.md) |
+| [03](issues/03-share-testable-aspect-logic.md) | 4 | Share testable aspect logic | Can broader fast coverage validate production logic while SDK smoke tests retain the integration boundary? | Candidate for user review; [results](results/03-aspect-logic.md) |
 | [04](issues/04-separate-unit-and-integration-test-projects.md) | Additional task | Separate unit and integration test projects | Can project boundaries make unit and integration execution explicit while preserving every scenario? | Planned; not started |
 
 Recommended evaluation order: 01, then 02, then 03. Keep each candidate independently reviewable and revertible. Start each from the latest approved baseline; do not include an unapproved candidate in the next change set. Rejecting one experiment does not prevent evaluating the others against the retained baseline.
@@ -23,7 +23,7 @@ explicit implementation request; this pull request records its scope only.
 
 Experiment 01 used approved baseline `7fa01ab`, which differs from the original planning baseline `62f653d` only in documentation. Its candidate was subsequently merged in PR #1 at `f05e9fa`; that synchronized main revision is the baseline for experiment 02. The historical report preserves the original candidate's measurements and review state.
 
-The experiment 02 candidate still discovers eight tests: five ordinary xUnit tests and three AspectTests. Four ordinary tests exercise consumers through one precompiled SDK fixture and two temporary failed SDK builds: one grouped diagnostic consumer and one malformed XML consumer. The merged baseline uses five temporary SDK builds for the same scenarios. The user approved experiment 02 candidate `bd9ce04` on 2026-10-03; integration remains pending.
+The experiment 02 candidate still discovers eight tests: five ordinary xUnit tests and three AspectTests. Four ordinary tests exercise consumers through one precompiled SDK fixture and two temporary failed SDK builds: one grouped diagnostic consumer and one malformed XML consumer. Its earlier baseline used five temporary SDK builds for the same scenarios. The user approved experiment 02 candidate `bd9ce04` on 2026-10-03; it was merged in PR #2 at `9a0aa8b`, the approved baseline for experiment 03.
 
 The [previous diagnosis](../test-performance/diagnosis.md) records full test command times of 16.02 s and 26.81 s after grouping. These historical samples demonstrate variation. Experiment 01 collected fresh measurements; experiments 02 and 03 must do the same against their latest approved baseline.
 
@@ -103,8 +103,30 @@ zero warnings/errors and standard solution execution passed all eight tests.
 The report maps moved assertions, shared prerequisite compilation, retained
 process/culture isolation, and the loss of a fresh project build per runtime
 scenario. The user approved this tradeoff and candidate `bd9ce04` on 2026-10-03.
-The review boundary for adoption is satisfied; integration remains pending.
-Experiment 03 is unstarted and Task 04 remains separately planned.
+It was subsequently merged in PR #2 at `9a0aa8b`. The experiment 02 report
+preserves its historical integration handoff. Experiment 03 now has its own
+candidate report; Task 04 remains separately planned.
+
+## Experiment 03 review handoff
+
+The [shared-logic report](results/03-aspect-logic.md),
+[measurement script](results/03-measure.ps1), and
+[raw timings](results/03-timings.csv) describe the independently reviewable
+candidate against `9a0aa8b`. It retains every original assertion and SDK smoke
+scenario, and adds seventeen unit tests and four AspectTests. Full selects 29
+tests; fast selects 25 and continues to defer the same four integration tests.
+
+The attribute and adapter execute the original shared production validation
+and generation source, while the SDK fixture retains project/resource-map,
+embedding, associated-type naming, runtime culture/fallback, and error coverage.
+The report explains source inclusion for internal compile-time helpers and the
+reserved-keyword DesignTime snapshot boundary. Three reverted negative controls
+demonstrate validation, generated-template, and SDK-wiring sensitivity.
+
+Broader fast protection does not itself establish a speed improvement or
+equivalent SDK coverage. Measurements, assertion mapping, limitations, and the
+recommendation are in the report. Adoption and permanent test classification
+remain user decisions; this candidate has not been merged.
 
 ## Additional task 04: separate unit and integration test projects
 

@@ -1,0 +1,3 @@
+Campaign,Attempt,Mode,Route,Revision,BuildExit,TestExit,Executed,Passed,Failed,Skipped,ExternalWallSeconds,Diagnostic,Log
+1,35,warm-build-test,fast,baseline,1,NotRun,0,0,0,0,NotCaptured,CS0009,test-results/03-aspect-logic/interrupted-measurements/35-baseline-sample-warm-build-test-fast-build.log
+2,8,test-only,full,candidate,NotRun,1,29,28,1,0,NotCaptured,CS0009,test-results/03-aspect-logic/interrupted-measurements-2/08-candidate-sample-test-only-full-test.log
