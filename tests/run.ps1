@@ -18,7 +18,30 @@ $fast = @(
     'InvalidPaths'
     'UnavailableProjectContext'
     'UnsupportedTargets'
+    'RawTextGeneration'
+    'ResourceKeyIdentifiers'
+    'ResourceValidationDiagnostics'
+    'KeywordResourceKey'
 )
+$fast += @(
+    'ReadsTextEntriesAndSdkManifestName'
+    'AcceptsExplicitStringTypesEmptyValuesAndCaseSensitiveKeys'
+    'AcceptsAnEmptyReferenceResource'
+    'RejectsMalformedXmlWithoutAnUnhandledXmlException'
+    'RejectsInvalidRootElements'
+    'RejectsDuplicateOrUnnamedResourceKeys'
+    'RejectsInvalidValueAndTypeStructures'
+    'RejectsInvalidPathsBeforeUnavailableProjectContext'
+    'DistinguishesUnavailableProjectContextFromMissingFiles'
+    'RejectsCultureSpecificReferenceResourcesBeforeMissingSdkMap'
+    'RejectsUnavailableSdkMaps'
+    'RejectsMissingOrMalformedEmbeddedResourceMetadata'
+    'RejectsCustomNamesAndLinkedResourceMetadata'
+    'RejectsResourcesOutsideTheProjectDirectory'
+    'RejectsCultureSpecificSdkMetadata'
+    'MatchesResourceMapPathsUsingPlatformComparison'
+    'RecognizesKeywordAndUnicodeResourceKeyIdentifiers'
+) | ForEach-Object { "Talby.Core.ResxAccess.Tests.ReferenceResourceTests.$_" }
 $expected = if ($Mode -eq 'fast') { $fast } else { $fast + $integration }
 $results = Join-Path $root "test-results/execution/$Mode-$([Guid]::NewGuid().ToString('N'))"
 $arguments = @(
@@ -28,7 +51,7 @@ $arguments = @(
 if ($Mode -eq 'fast')
 {
     $arguments += '--filter', 'Category!=Integration'
-    Write-Host "FAST: deferring $($integration.Count) integration tests (generation and runtime lookup are not checked):"
+    Write-Host "FAST: deferring $($integration.Count) integration tests (SDK embedding and runtime lookup are not checked):"
     $integration | ForEach-Object { Write-Host "  $_" }
 }
 

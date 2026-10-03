@@ -91,7 +91,7 @@ Full applies no filter; the standard solution-level `dotnet test` command above
 also continues to select every test.
 
 Each entry point propagates test failures and checks the passed TRX identities
-against the experiment's fixed inventory (four fast, eight full), rejecting
+against the candidate's fixed inventory (25 fast, 29 full), rejecting
 empty, skipped, missing, duplicate, or unexpected selections. Adding or renaming
 tests requires reviewing and updating that inventory in `tests/run.ps1`.
 Unique TRX directories under ignored `test-results/execution/` prevent stale
@@ -141,14 +141,25 @@ Rebuild the solution after changing fixture source or `.resx` files before using
 assertions; run full to verify them. Fast/full selection and the required full
 verification gate remain unchanged. The [fixture experiment report](.scratch/test-policy/results/02-fixtures.md)
 records coverage, negative controls, build costs, and before/after measurements.
-The user approved this candidate on 2026-10-03; integration is pending.
+The user approved this candidate on 2026-10-03; it was merged in PR #2.
 
 The stock snapshot runner does not forward the consumer project path or resource
 map, even when resource files and the targets import are present in its project.
-`UnavailableProjectContext` records this limitation. Diagnostics independent of
-SDK context have reviewed `.t.cs` baselines; generation and context-dependent
-diagnostics are verified through real consumer builds. No custom snapshot runner
-or production test hook is required.
+`UnavailableProjectContext` records this limitation. The shared-logic candidate
+adds seventeen unit tests of internal production helpers and four AspectTests
+using deterministic XML/resource-map inputs. The adapter delegates to the
+original production helper source through supported `@Include` directives;
+generated Raw Text snapshots use the attribute's compiled templates. A
+DesignTime `.i.cs` snapshot checks reserved-keyword signatures, while the SDK
+fixture retains their method-body/runtime checks.
+
+All original consumer assertions remain in full. Fast checks shared validation
+and generated templates, but cannot establish SDK wiring, embedding, associated
+manifest naming, or runtime lookup. The [shared-logic report](.scratch/test-policy/results/03-aspect-logic.md)
+records adapter limitations, assertion mapping, negative controls, and paired
+timings. This candidate awaits user review and does not establish a permanent
+test classification policy. No custom snapshot runner or public testing API is
+required.
 
 Relevant upstream documentation: [SDK resource manifest names](https://learn.microsoft.com/en-us/dotnet/core/resources/manifest-file-names)
 and [Metalama aspect testing](https://doc.metalama.net/conceptual/aspects/testing/aspect-testing).
