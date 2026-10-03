@@ -3,6 +3,7 @@
     <Project Path="src/Talby.Core.ResxAccess/Talby.Core.ResxAccess.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Talby.Core.ResxAccess.ConsumerFixture/Talby.Core.ResxAccess.ConsumerFixture.csproj" />
     <Project Path="tests/Talby.Core.ResxAccess.Tests/Talby.Core.ResxAccess.Tests.csproj" />
     <Project Path="tests/Talby.Core.ResxAccess.AspectTests/Talby.Core.ResxAccess.AspectTests.csproj" />
   </Folder>

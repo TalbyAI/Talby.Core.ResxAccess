@@ -41,8 +41,8 @@ internal sealed class ConsumerProject : IDisposable
     public async Task<(int ExitCode, string Output)> Build()
         => await Run("build", Path.Combine(DirectoryPath, "Consumer.csproj"), "--configuration", "Release", "--nologo", "--verbosity", "quiet");
 
-    public async Task<(int ExitCode, string Output)> Invoke()
-        => await Run(Path.Combine(DirectoryPath, "bin/Release/net10.0/Consumer.dll"));
+    public static async Task<(int ExitCode, string Output)> Invoke(string assemblyPath, params string[] arguments)
+        => await Run([assemblyPath, .. arguments]);
 
     private static async Task<(int ExitCode, string Output)> Run(params string[] arguments)
     {

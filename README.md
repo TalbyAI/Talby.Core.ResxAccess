@@ -70,7 +70,8 @@ dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-r
 The candidate entry points require PowerShell 7 (`pwsh`) and the Release restore
 and solution build above. Rebuild after changing source, resources, or fixtures;
 both commands deliberately use `--no-build --no-restore`. Fast still requires
-building both test projects and the library.
+building both test projects, the library, and the consumer fixture in the
+precompiled-fixture candidate below.
 
 ```powershell
 # During local iteration: unit tests and all AspectTests.
@@ -118,11 +119,29 @@ The solution contains the library, ordinary xUnit tests, and a dedicated
 file-based discovery. Ordinary tests keep `MetalamaEnabled=false`; the library
 keeps `MetalamaRemoveCompileTimeOnlyCode=false`.
 
-Consumer integration tests create temporary SDK projects, build them from a
-different working directory, and invoke their assemblies. They check the public
-API, SDK naming, culture lookup, diagnostics, and runtime failures without
-asserting private helper layouts. Malformed XML is diagnosed by SDK resource
+### Precompiled consumer fixture experiment (approved)
+
+`Talby.Core.ResxAccess.ConsumerFixture` is a real SDK executable built with the
+solution. Metalama processes its aspects; ordinary tests still keep
+`MetalamaEnabled=false`. The test project references the fixture so its assembly,
+runtime configuration, and satellite assemblies are copied to the test output.
+Runtime tests invoke that output in three fresh processes, retaining culture and
+process isolation without rebuilding a consumer for each scenario.
+
+Positive Resource Sets keep real SDK embedding. A fixture-only target removes
+the missing-manifest Resource Set and replaces only the missing-Resource-Key
+Resource Set. The grouped invalid-consumer and malformed XML tests still create
+isolated temporary SDK projects and build from a different working directory.
+Full execution now starts two temporary SDK builds instead of five, preserving
+every test identity and assertion. Malformed XML is diagnosed by SDK resource
 generation before the aspect executes (`MSB3103`).
+
+Rebuild the solution after changing fixture source or `.resx` files before using
+`--no-build`. A successful fixture build alone does not execute its runtime
+assertions; run full to verify them. Fast/full selection and the required full
+verification gate remain unchanged. The [fixture experiment report](.scratch/test-policy/results/02-fixtures.md)
+records coverage, negative controls, build costs, and before/after measurements.
+The user approved this candidate on 2026-10-03; integration is pending.
 
 The stock snapshot runner does not forward the consumer project path or resource
 map, even when resource files and the targets import are present in its project.

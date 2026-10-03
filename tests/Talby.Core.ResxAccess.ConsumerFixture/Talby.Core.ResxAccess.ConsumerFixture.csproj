@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>ConsumerRoot</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Talby.Core.ResxAccess/Talby.Core.ResxAccess.csproj" />
+  </ItemGroup>
+
+  <Import Project="../../src/Talby.Core.ResxAccess/buildTransitive/Talby.Core.ResxAccess.targets" />
+
+  <!-- Sabotage only the two failure Resource Sets after SDK naming and generation. -->
+  <Target Name="SabotageRuntimeResources" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <_CoreCompileResourceInputs Remove="$(IntermediateOutputPath)ConsumerRoot.Resources.MissingManifest.resources" />
+    </ItemGroup>
+    <Copy SourceFiles="$(IntermediateOutputPath)ConsumerRoot.Resources.Replacement.resources"
+          DestinationFiles="$(IntermediateOutputPath)ConsumerRoot.Resources.Labels.resources"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

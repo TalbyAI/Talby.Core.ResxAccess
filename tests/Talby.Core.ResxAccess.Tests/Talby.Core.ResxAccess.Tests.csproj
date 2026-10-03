@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Talby.Core.ResxAccess\Talby.Core.ResxAccess.csproj" />
+    <ProjectReference Include="../Talby.Core.ResxAccess.ConsumerFixture/Talby.Core.ResxAccess.ConsumerFixture.csproj" />
   </ItemGroup>
 
 </Project>
