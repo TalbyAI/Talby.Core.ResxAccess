@@ -1,24 +1,72 @@
 # Test execution policy experiments
 
-Status: needs-triage
+Status: ready-for-human
 
 ## Goal and review boundary
 
-Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. These issues specify experiments; they do not authorize implementation in this planning turn or establish a permanent test classification policy.
+Evaluate options 2, 3, and 4 from the test-performance discussion as three separate change sets. Each experiment must deliver working code, objective before/after measurements, and an assertion coverage review before the user decides whether to adopt it. Implementation requires an explicit request; delivering a candidate does not establish a permanent test classification policy. Experiment 01 has been implemented on request and awaits user review before adoption.
 
-| Issue | Previous option | Experiment | Main question |
-| --- | --- | --- | --- |
-| [01](issues/01-separate-fast-and-full-execution.md) | 2 | Separate fast and full execution | How much local feedback time is saved by deferring integration tests? |
-| [02](issues/02-precompile-consumer-fixtures.md) | 3 | Precompile consumer fixtures | Does removing builds from runtime tests reduce the complete development cycle? |
-| [03](issues/03-share-testable-aspect-logic.md) | 4 | Share testable aspect logic | Can broader fast coverage validate production logic while SDK smoke tests retain the integration boundary? |
+| Issue | Previous option | Experiment | Main question | Progress |
+| --- | --- | --- | --- | --- |
+| [01](issues/01-separate-fast-and-full-execution.md) | 2 | Separate fast and full execution | How much local feedback time is saved by deferring integration tests? | Implemented; [results](results/01-execution.md) awaiting user review |
+| [02](issues/02-precompile-consumer-fixtures.md) | 3 | Precompile consumer fixtures | Does removing builds from runtime tests reduce the complete development cycle? | Not started |
+| [03](issues/03-share-testable-aspect-logic.md) | 4 | Share testable aspect logic | Can broader fast coverage validate production logic while SDK smoke tests retain the integration boundary? | Not started |
 
 Recommended evaluation order: 01, then 02, then 03. Keep each candidate independently reviewable and revertible. Start each from the latest approved baseline; do not include an unapproved candidate in the next change set. Rejecting one experiment does not prevent evaluating the others against the retained baseline.
 
 ## Current evidence
 
-The current baseline is commit `62f653d`. The solution discovers eight tests: five ordinary xUnit tests and three AspectTests. Four ordinary tests exercise consumers through five temporary SDK builds: one successful consumer, one grouped diagnostic consumer, one malformed XML consumer, and two runtime failure consumers.
+Experiment 01 used approved baseline `7fa01ab`, which differs from the original planning baseline `62f653d` only in documentation. Candidate `c6d29e3` is on `test/separate-fast-and-full-execution`; it is not an approved baseline for subsequent experiments. The solution still discovers eight tests: five ordinary xUnit tests and three AspectTests. Four ordinary tests exercise consumers through five temporary SDK builds: one successful consumer, one grouped diagnostic consumer, one malformed XML consumer, and two runtime failure consumers.
 
-The [previous diagnosis](../test-performance/diagnosis.md) records full test command times of 16.02 s and 26.81 s after grouping. These two historical samples demonstrate variation, not an adequate baseline for the new experiments. Collect fresh measurements for every candidate.
+The [previous diagnosis](../test-performance/diagnosis.md) records full test command times of 16.02 s and 26.81 s after grouping. These historical samples demonstrate variation. Experiment 01 collected fresh measurements; experiments 02 and 03 must do the same against their latest approved baseline.
+
+## Experiment 01 results and review handoff
+
+The [report](results/01-execution.md) and [raw timings](results/01-timings.csv)
+record 39 observations collected on 2026-10-02: six excluded warm-ups, thirty
+samples (five paired comparisons per mode for each candidate route), and three
+additional clean-output observations. Initial restore is excluded; temporary
+consumer restores and builds remain included in full test time.
+
+| Mode | Baseline full median | Candidate fast median | Candidate full median | Full-to-fast reduction |
+| --- | ---: | ---: | ---: | ---: |
+| Test-only | 16.08 s | 5.90 s | 16.50 s | 10.18 s (63.33%) |
+| Warm build + test | 17.16 s | 8.35 s | 17.81 s | 8.81 s (51.36%) |
+
+Fast saves local work by deferring four Consumer integration tests and their
+five temporary SDK builds. It retains the setup unit test and all three
+AspectTests. Both routes still require building all three solution projects
+after source or fixture changes. Full retains every test and assertion; the
+standard solution-level `dotnet test` command continues to select all eight.
+Equivalent full execution has slightly worse medians and mixed paired deltas;
+no full-suite speed improvement is demonstrated.
+
+Candidate commands, after the Release restore/build prerequisites below:
+
+```powershell
+pwsh -NoProfile -File tests/run.ps1 -Mode fast
+pwsh -NoProfile -File tests/run.ps1 -Mode full
+```
+
+The entry points require PowerShell 7, propagate failures, and validate the
+experiment's fixed passed-test inventory. Discovery confirmed disjoint fast
+and integration selections whose union equals full. Empty and missing
+selections were rejected. A temporary integration assertion mutation failed
+full while fast passed; every mutation was reverted before final verification.
+The final Release build passed without warnings or errors and full passed 8/8.
+Independent Standards and Spec reviews found no issues.
+
+The report maps the unchanged assertion inventory and deferred regressions.
+Current AspectTests do not validate successful SDK-backed generation or runtime
+lookup; fast success does not establish either end to end. Full remains the
+required verification before merge. No CI provider is configured, so automatic
+enforcement is not claimed.
+
+Recommendation: accept fast for optional local iteration only if the deferred
+integration feedback is acceptable, while retaining the full verification gate.
+The user has not yet approved adoption. Experiments 02 and 03 remain unstarted;
+do not base either on this candidate before that review. The parent status
+records the human review handoff, not completion of all three experiments.
 
 ## Shared measurement protocol
 
