@@ -6,8 +6,8 @@ Environment: Windows, Intel Core i9-10900K (10 cores / 20 logical processors),
 
 ## Outcome
 
-The approved target is met: median external AspectTests command time decreases
-from 11.110 s to 8.751 s, saving 2.359 s (21.2%). Full testing improves 24.4%,
+The approved target is met: median external AspectTests complete-cycle time decreases
+from 11.111 s to 8.752 s, saving 2.359 s (21.2%). Full testing improves 24.4%,
 and warm build + full improves 19.3% by median complete-cycle wall time. Every
 paired candidate cycle is faster than its corresponding baseline observation.
 The final clean-output Release build has zero warnings/errors and full verifies

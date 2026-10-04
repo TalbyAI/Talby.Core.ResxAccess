@@ -75,6 +75,13 @@ actually used in the Reference Resource become parameters, in numeric order;
 explicit. Explicit cultures must be non-null. There is no formatting-culture-only
 overload. Keys without Formatting Placeholders retain only Raw Text methods.
 
+Each formatting call allocates an argument array with one slot per index from
+zero through the highest Indexed Placeholder identity, including unused gaps.
+For example, `{999999}` requires 1,000,000 slots (about 8 MB on a 64-bit runtime)
+even though the generated method accepts only `arg999999`. Prefer small indices
+to keep runtime allocations small. Compile-time syntax validation uses one null
+argument regardless of index gaps; that saving applies only during compilation.
+
 Every Translation must use exactly the Reference Resource's Indexed Placeholder
 identities, including entries omitted because their Resource Keys are invalid
 identifiers. Translations may reorder or repeat identities and change alignment or
@@ -116,8 +123,8 @@ dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-r
 The solution contains three test projects:
 
 - `Talby.Core.ResxAccess.UnitTests`: 19 tests of Metalama setup and shared Reference Resource validation.
-- `Talby.Core.ResxAccess.IntegrationTests`: sixteen SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
-- `Talby.Core.ResxAccess.AspectTests`: eight dedicated Metalama snapshot tests.
+- `Talby.Core.ResxAccess.IntegrationTests`: 16 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
+- `Talby.Core.ResxAccess.AspectTests`: 8 dedicated Metalama snapshot tests.
 
 The [testing criterion](docs/agents/testing.md) defines test placement,
 compatible diagnostic grouping, assertion preservation, negative controls and
