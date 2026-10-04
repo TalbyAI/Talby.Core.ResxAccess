@@ -117,7 +117,15 @@ The solution contains three test projects:
 
 - `Talby.Core.ResxAccess.UnitTests`: 19 tests of Metalama setup and shared Reference Resource validation.
 - `Talby.Core.ResxAccess.IntegrationTests`: sixteen SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
-- `Talby.Core.ResxAccess.AspectTests`: twelve dedicated Metalama snapshot tests.
+- `Talby.Core.ResxAccess.AspectTests`: eight dedicated Metalama snapshot tests.
+
+The [testing criterion](docs/agents/testing.md) defines test placement,
+compatible diagnostic grouping, assertion preservation, negative controls and
+performance measurements. `ResourceValidationDiagnostics` groups 24 named
+diagnostic cases into five labeled behavior groups with one shared compilation.
+The generation and DesignTime snapshots remain separate. This reduces compiler
+invocations while retaining every diagnostic expectation; filtering and failure
+reporting now operate on the grouped snapshot.
 
 The integration test classes share an xUnit collection fixture that caches one
 build for seven compatible diagnostic tests. Malformed XML uses a separate
@@ -171,9 +179,9 @@ Full applies no filter; the standard solution-level `dotnet test` command above
 also continues to select every test.
 
 Each entry point propagates test failures and checks the passed TRX identities
-against the fixed inventory (31 fast, 47 full), rejecting
-empty, skipped, missing, duplicate, or unexpected selections. Adding or renaming
-tests requires reviewing and updating that inventory in `tests/run.ps1`.
+against the fixed inventory (27 fast, 43 full), rejecting
+empty, skipped, missing, duplicate, or unexpected selections. Adding, grouping,
+or renaming tests requires reviewing and updating that inventory in `tests/run.ps1`.
 Unique TRX directories under ignored `test-results/execution/` prevent stale
 results from satisfying the check.
 
@@ -191,9 +199,9 @@ exit $LASTEXITCODE
 No CI provider is configured, so this requirement is documented rather than
 automatically enforced. The [experiment report](.scratch/test-policy/results/01-execution.md)
 contains measurements, selection checks, and the unchanged assertion inventory.
-Experiment 01 was merged in PR #1. The project split retains its optional local
-fast route and complete verification gate; it does not establish a permanent
-test classification policy or demonstrate a performance improvement. The
+Experiment 01 was merged in PR #1. The project split retained its optional local
+fast route and complete verification gate; that historical experiment did not
+establish a permanent test classification policy or demonstrate a performance improvement. The
 [project split report](.scratch/test-policy/results/04-project-split.md) maps
 test identities and assertions and records verification.
 
@@ -222,8 +230,9 @@ scenario and requires distinct Translations from both Resource Sets.
 Diagnostic tests still create isolated temporary SDK projects and build from a
 different working directory. Full execution starts two temporary SDK builds
 instead of nine: seven compatible diagnostic tests share one compilation and
-the malformed XML test uses another. Every test identity is preserved, so the
-31 fast / 47 full inventory in `tests/run.ps1` is unchanged. Grouped assertions
+the malformed XML test uses another. That integration refactor preserved every
+test identity. The later diagnostic snapshot consolidation sets the current
+inventory to 27 fast / 43 full. Grouped assertions
 require the target source file, diagnostic code, and expected message on the
 same output line. Malformed XML is diagnosed by SDK resource generation before
 the aspect executes (`MSB3103`). The shared builds start lazily: runtime-only
@@ -251,9 +260,10 @@ All original consumer assertions remain in full. Fast checks shared validation
 and generated templates, but cannot establish SDK wiring, embedding, associated
 manifest naming, or runtime lookup. The [shared-logic report](.scratch/test-policy/results/03-aspect-logic.md)
 records adapter limitations, assertion mapping, negative controls, and paired
-timings. Its historical evidence does not establish a permanent test
-classification policy. No custom snapshot runner or public testing API is
-required.
+timings. The current [testing criterion](docs/agents/testing.md) was approved
+separately from those historical experiments. No custom snapshot runner or
+public testing API is required. The [snapshot consolidation report](.scratch/aspect-test-performance/results/consolidation.md)
+records the retained assertions, negative controls and baseline/candidate timings.
 
 Relevant upstream documentation: [SDK resource manifest names](https://learn.microsoft.com/en-us/dotnet/core/resources/manifest-file-names)
 and [Metalama aspect testing](https://doc.metalama.net/conceptual/aspects/testing/aspect-testing).

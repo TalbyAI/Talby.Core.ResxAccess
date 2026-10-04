@@ -38,11 +38,7 @@ $fast = @(
     'ResourceKeyIdentifiers'
     'ResourceValidationDiagnostics'
     'KeywordResourceKey'
-    'LocalizedResourceDiagnostics'
-    'ExpectedCultureDiagnostics'
-    'ResourceEntryValidationDiagnostics'
     'IndexedPlaceholderGeneration'
-    'IndexedPlaceholderDiagnostics'
 )
 $fast += @(
     'ReadsTextEntriesAndSdkManifestName'

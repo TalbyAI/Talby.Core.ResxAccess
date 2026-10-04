@@ -33,13 +33,15 @@ dotnet test tests/Talby.Core.ResxAccess.UnitTests/Talby.Core.ResxAccess.UnitTest
 dotnet test tests/Talby.Core.ResxAccess.IntegrationTests/Talby.Core.ResxAccess.IntegrationTests.csproj --configuration Release --no-build --no-restore
 ```
 
-The PowerShell 7 runner `pwsh -NoProfile -File tests/run.ps1 -Mode fast` selects UnitTests and AspectTests, deferring IntegrationTests. Use `-Mode full` before merge to execute all 47 tests and validate the inventory. Update `tests/run.ps1` when adding or renaming tests.
+The PowerShell 7 runner `pwsh -NoProfile -File tests/run.ps1 -Mode fast` selects UnitTests and AspectTests, deferring IntegrationTests. Use `-Mode full` before merge to execute all 43 tests and validate the inventory. Update `tests/run.ps1` when adding, grouping, or renaming tests.
 
 ## Coding Style & Naming Conventions
 
 Follow the existing C# style: four-space indentation, file-scoped namespaces, and braces on separate lines. Use PascalCase for types and methods, camelCase for parameters and local variables, and descriptive filenames matching their primary types. All projects enable nullable reference types and implicit usings; preserve these settings. Project XML uses two-space indentation. No repository-specific formatter or lint configuration is present.
 
 ## Testing Guidelines
+
+Before adding tests, grouping scenarios, or optimizing test execution, read [docs/agents/testing.md](docs/agents/testing.md) for test placement, assertion preservation, negative controls, and performance measurements.
 
 Use xUnit `[Fact]` tests with descriptive PascalCase method names, such as `CanCreateAndQueryCompilation`, in `*Tests.cs` files. For Metalama code-model tests, follow the existing `UnitTestClass` and disposable `CreateTestContext()` pattern. Add focused tests for new behavior and bug fixes. No coverage threshold is configured.
 
