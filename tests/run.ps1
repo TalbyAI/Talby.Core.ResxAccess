@@ -21,6 +21,14 @@ $integration += @(
     'ReportsMissingAndInvalidExpectedCultures'
     'RejectsLocalizedResourcesWithoutStandardSatelliteEmbedding'
 ) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.LocalizedResourceConsumerTests.$_" }
+$integration += @(
+    'GeneratesRequiredNullableArgumentsInNumericOrderWithIndexGaps'
+    'SelectsResourceAndFormattingCulturesIndependentlyForAllOverloads'
+    'FormatsAlignmentEscapedBracesAndNullArgumentsWhilePreservingRawText'
+    'PropagatesStandardFormattingFailuresAndRejectsNullCultures'
+    'RejectsMalformedIndexedPlaceholdersWithResourceAndKeyDiagnostics'
+    'RejectsChangedPlaceholderContractsInEveryLocalizedResourceAndOmittedKey'
+) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.IndexedPlaceholderConsumerTests.$_" }
 $fast = @(
     'Talby.Core.ResxAccess.UnitTests.MetalamaSetupTests.CanCreateAndQueryCompilation'
     'InvalidPaths'
@@ -33,6 +41,8 @@ $fast = @(
     'LocalizedResourceDiagnostics'
     'ExpectedCultureDiagnostics'
     'ResourceEntryValidationDiagnostics'
+    'IndexedPlaceholderGeneration'
+    'IndexedPlaceholderDiagnostics'
 )
 $fast += @(
     'ReadsTextEntriesAndSdkManifestName'

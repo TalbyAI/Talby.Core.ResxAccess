@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml;
 using Metalama.Framework.Aspects;
 using Metalama.Framework.Code;
@@ -48,6 +49,29 @@ internal static class ResxAccessImplementation
 
                 var cultureMethod = adviser.IntroduceMethod(nameof(GenerateResxAccessAttribute.RawTextWithCulture), buildMethod: method => method.Name = key, args: new { key, resourceManagerField }).Declaration;
                 adviser.IntroduceMethod(nameof(GenerateResxAccessAttribute.RawText), buildMethod: method => method.Name = key, args: new { cultureMethod });
+                if (resource.IndexedArguments.TryGetValue(key, out var indices) && indices.Length > 0)
+                {
+                    for (var cultureCount = 0; cultureCount <= 2; cultureCount++)
+                    {
+                        var overloadCultureCount = cultureCount;
+                        adviser.IntroduceMethod(nameof(GenerateResxAccessAttribute.FormattedText), buildMethod: method =>
+                        {
+                            method.Name = "Format" + key;
+                            foreach (var index in indices)
+                            {
+                                method.AddParameter("arg" + index, TypeFactory.GetType(typeof(object)).ToNullable());
+                            }
+                            if (overloadCultureCount >= 1)
+                            {
+                                method.AddParameter("resourceCulture", typeof(CultureInfo));
+                            }
+                            if (overloadCultureCount == 2)
+                            {
+                                method.AddParameter("formattingCulture", typeof(CultureInfo));
+                            }
+                        }, args: new { rawTextMethod = cultureMethod, indices, cultureCount });
+                    }
+                }
             }
         }
         catch (ResourceValidationException exception)

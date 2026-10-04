@@ -9,7 +9,7 @@ namespace Talby.Core.ResxAccess;
 [CompileTime]
 internal static class ReferenceResourceReader
 {
-    public static (string ManifestBaseName, HashSet<string> Keys) Read(string referenceResource, string? projectPath, string? resourceMap, string[]? expectedCultures = null)
+    public static (string ManifestBaseName, HashSet<string> Keys, Dictionary<string, int[]> IndexedArguments) Read(string referenceResource, string? projectPath, string? resourceMap, string[]? expectedCultures = null)
     {
         try
         {
@@ -21,7 +21,7 @@ internal static class ReferenceResourceReader
         }
     }
 
-    private static (string ManifestBaseName, HashSet<string> Keys) ReadCore(string referenceResource, string? projectPath, string? resourceMap, string[]? expectedCultures)
+    private static (string ManifestBaseName, HashSet<string> Keys, Dictionary<string, int[]> IndexedArguments) ReadCore(string referenceResource, string? projectPath, string? resourceMap, string[]? expectedCultures)
     {
         if (string.IsNullOrWhiteSpace(referenceResource) || !string.Equals(Path.GetExtension(referenceResource), ".resx", StringComparison.OrdinalIgnoreCase))
         {
@@ -70,7 +70,17 @@ internal static class ReferenceResourceReader
             throw new ResourceValidationException($"'{referenceResource}' is embedded as a culture-specific resource.");
         }
 
-        var keys = ReadKeys(resourcePath, referenceResource);
+        var entries = ReadEntries(resourcePath, referenceResource);
+        var keys = new HashSet<string>(entries.Keys, StringComparer.Ordinal);
+        var indexedArguments = new Dictionary<string, int[]>(StringComparer.Ordinal);
+        foreach (var entry in entries)
+        {
+            var arguments = IndexedPlaceholderContract.Read(entry.Value, referenceResource, entry.Key);
+            if (arguments is not null)
+            {
+                indexedArguments.Add(entry.Key, arguments);
+            }
+        }
         var cultureNames = CultureInfo.GetCultures(CultureTypes.AllCultures).Where(c => c.Name.Length > 0).Select(c => c.Name).ToDictionary(name => name, StringComparer.OrdinalIgnoreCase);
         foreach (var culture in expectedCultures ?? Array.Empty<string>())
         {
@@ -106,10 +116,22 @@ internal static class ReferenceResourceReader
                     throw new ResourceValidationException($"'{localizedResource}' is a duplicate Localized Resource for Resource Culture '{canonicalCulture}'. Only one Localized Resource per Resource Culture is allowed.");
                 }
 
-                var localizedKeys = ReadKeys(localizedPath, localizedResource);
+                var localizedEntries = ReadEntries(localizedPath, localizedResource);
+                var localizedKeys = new HashSet<string>(localizedEntries.Keys, StringComparer.Ordinal);
                 if (!keys.SetEquals(localizedKeys))
                 {
                     throw new ResourceValidationException($"'{localizedResource}' must contain exactly the Reference Resource's case-sensitive Resource Keys. Missing: {DescribeKeys(keys.Except(localizedKeys))}. Additional: {DescribeKeys(localizedKeys.Except(keys))}.");
+                }
+
+                foreach (var entry in localizedEntries)
+                {
+                    var arguments = IndexedPlaceholderContract.Read(entry.Value, localizedResource, entry.Key);
+                    if (indexedArguments.TryGetValue(entry.Key, out var referenceArguments) &&
+                        (arguments is null || !referenceArguments.SequenceEqual(arguments)))
+                    {
+                        var identities = referenceArguments.Length == 0 ? "(none)" : string.Join(", ", referenceArguments);
+                        throw new ResourceValidationException($"'{localizedResource}' Resource Key '{entry.Key}' must use exactly the Reference Resource's Placeholder Contract (Indexed Placeholders: {identities}).");
+                    }
                 }
 
                 var localizedMetadata = resourceMetadata.FirstOrDefault(parts => string.Equals(parts[0], localizedPath, pathComparison));
@@ -138,7 +160,7 @@ internal static class ReferenceResourceReader
             }
         }
 
-        return (metadata[1], keys);
+        return (metadata[1], keys, indexedArguments);
     }
 
     private static string DescribeKeys(IEnumerable<string> keys)
@@ -147,7 +169,7 @@ internal static class ReferenceResourceReader
         return names.Length == 0 ? "(none)" : string.Join(", ", names);
     }
 
-    private static HashSet<string> ReadKeys(string resourcePath, string resourceName)
+    private static Dictionary<string, string> ReadEntries(string resourcePath, string resourceName)
     {
         var document = XDocument.Load(resourcePath, LoadOptions.PreserveWhitespace);
         if (document.Root?.Name != "root")
@@ -155,19 +177,20 @@ internal static class ReferenceResourceReader
             throw new ResourceValidationException($"'{resourceName}' must contain a resx root element.");
         }
 
-        var keys = new HashSet<string>(StringComparer.Ordinal);
+        var entries = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var entry in document.Root.Elements("data"))
         {
             var key = (string?)entry.Attribute("name");
             var resourceType = (string?)entry.Attribute("type");
             if (string.IsNullOrEmpty(key) || entry.Elements("value").Count() != 1 || entry.Attribute("mimetype") is not null ||
-                (resourceType is not null && resourceType.Split(new[] { ',' })[0].Trim() != "System.String") || !keys.Add(key))
+                (resourceType is not null && resourceType.Split(new[] { ',' })[0].Trim() != "System.String") || entries.ContainsKey(key))
             {
                 throw new ResourceValidationException($"'{resourceName}' must contain unique, named text entries with one value each.");
             }
+            entries.Add(key, entry.Element("value")!.Value);
         }
 
-        return keys;
+        return entries;
     }
 
     public static bool IsResourceKeyIdentifier(string key)

@@ -257,7 +257,10 @@ public class ReferenceResourceTests
         }
 
         public (string ManifestBaseName, HashSet<string> Keys) Read()
-            => ReferenceResourceReader.Read(ReferencePath, ProjectPath, MapPath);
+        {
+            var resource = ReferenceResourceReader.Read(ReferencePath, ProjectPath, MapPath);
+            return (resource.ManifestBaseName, resource.Keys);
+        }
 
         public void Dispose() => Directory.Delete(_directory, recursive: true);
     }

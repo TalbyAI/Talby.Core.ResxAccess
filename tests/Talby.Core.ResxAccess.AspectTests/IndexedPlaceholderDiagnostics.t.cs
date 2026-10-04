@@ -1,0 +1,4 @@
+// Error TRESX001 on `MalformedReference`: `Invalid Reference Resource: 'Labels.resx' Resource Key 'Bad' has a malformed Formatting Placeholder: Input string was not in a correct format. Failure to parse near offset 3. Expected an ASCII digit.`
+// Error TRESX004 on `MissingIdentity`: `Invalid Localized Resource: 'Labels.es.resx' Resource Key 'Summary' must use exactly the Reference Resource's Placeholder Contract (Indexed Placeholders: 0, 2).`
+// Error TRESX004 on `AdditionalIdentityOnOmittedKey`: `Invalid Localized Resource: 'Labels.es.resx' Resource Key 'omitted-key' must use exactly the Reference Resource's Placeholder Contract (Indexed Placeholders: (none)).`
+// Error TRESX004 on `MalformedLocalized`: `Invalid Localized Resource: 'Labels.es.resx' Resource Key 'Bad' has a malformed Formatting Placeholder: Unclosed Formatting Placeholder.`

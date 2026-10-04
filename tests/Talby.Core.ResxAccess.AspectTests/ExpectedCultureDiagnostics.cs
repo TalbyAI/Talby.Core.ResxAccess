@@ -2,6 +2,7 @@
 // @Include(_DeterministicResxAccessAttribute.cs)
 // @Include(../../src/Talby.Core.ResxAccess/ResxAccessImplementation.cs)
 // @Include(../../src/Talby.Core.ResxAccess/ReferenceResourceReader.cs)
+// @Include(../../src/Talby.Core.ResxAccess/IndexedPlaceholderContract.cs)
 // @Include(../../src/Talby.Core.ResxAccess/ResourceValidationException.cs)
 #endif
 namespace Consumer.Api;
