@@ -8,6 +8,27 @@ namespace Talby.Core.ResxAccess.IntegrationTests;
 [Collection("SDK consumer builds")]
 public class IndexedPlaceholderConsumerTests
 {
+    private readonly ConsumerDiagnosticsFixture diagnostics;
+
+    public IndexedPlaceholderConsumerTests(ConsumerDiagnosticsFixture diagnostics)
+    {
+        this.diagnostics = diagnostics;
+    }
+
+    private static readonly string[] InvalidPlaceholderText = new[] { "{0", "text }", "{}", "{-1}", "{ 0}", "{0,+5}", "{0,}", "{0:{}}", "{0x}", "{2147483648}", "{0,999999999999999}", "{0\t}", "{0, 1\t}" };
+
+    private static readonly (string Reference, string Localized)[] ChangedPlaceholderCases = new[]
+    {
+        (Reference: "{0} {2}", Localized: "{0}"),
+        (Reference: "{0} {2}", Localized: "{0} {1} {2}"),
+        (Reference: "{0}", Localized: ""),
+        (Reference: "{0}", Localized: "   "),
+        (Reference: "No arguments", Localized: "{0}"),
+        (Reference: "{0}", Localized: "{name}"),
+        (Reference: "{0}", Localized: "{0"),
+        (Reference: "{{0}}", Localized: "{0}")
+    };
+
     [Fact]
     public void GeneratesRequiredNullableArgumentsInNumericOrderWithIndexGaps()
     {
@@ -79,25 +100,12 @@ public class IndexedPlaceholderConsumerTests
     [Fact]
     public async Task RejectsMalformedIndexedPlaceholdersWithResourceAndKeyDiagnostics()
     {
-        using var consumer = new ConsumerProject("Console.WriteLine(\"Unused\");");
-        var invalidText = new[] { "{0", "text }", "{}", "{-1}", "{ 0}", "{0,+5}", "{0,}", "{0:{}}", "{0x}", "{2147483648}", "{0,999999999999999}", "{0\t}", "{0, 1\t}" };
-        for (var index = 0; index < invalidText.Length; index++)
-        {
-            consumer.Write($"Case{index}.cs", $$"""
-                using Talby.Core.ResxAccess;
-                [GenerateResxAccess("Resources/Case{{index}}.resx")]
-                public static class Case{{index}}
-                {
-                }
-                """);
-            consumer.Write($"Resources/Case{index}.resx", ResourceXml("Bad", invalidText[index]));
-        }
-
-        var build = await consumer.Build();
+        var build = await diagnostics.BuildDiagnostics();
         Assert.NotEqual(0, build.ExitCode);
-        for (var index = 0; index < invalidText.Length; index++)
+        for (var index = 0; index < InvalidPlaceholderText.Length; index++)
         {
-            Assert.Contains($"error TRESX001: Invalid Reference Resource: 'Resources/Case{index}.resx' Resource Key 'Bad' has a malformed Formatting Placeholder", build.Output);
+            Assert.True(build.Output.Split('\n').Any(line => line.Contains($"Malformed{index}.cs(", StringComparison.Ordinal)
+                && line.Contains($"error TRESX001: Invalid Reference Resource: 'Resources/Malformed{index}.resx' Resource Key 'Bad' has a malformed Formatting Placeholder", StringComparison.Ordinal)), build.Output);
         }
         Assert.DoesNotContain("LAMA0041", build.Output);
     }
@@ -105,41 +113,48 @@ public class IndexedPlaceholderConsumerTests
     [Fact]
     public async Task RejectsChangedPlaceholderContractsInEveryLocalizedResourceAndOmittedKey()
     {
-        using var consumer = new ConsumerProject("Console.WriteLine(\"Unused\");");
-        var cases = new[]
-        {
-            (Reference: "{0} {2}", Localized: "{0}"),
-            (Reference: "{0} {2}", Localized: "{0} {1} {2}"),
-            (Reference: "{0}", Localized: ""),
-            (Reference: "{0}", Localized: "   "),
-            (Reference: "No arguments", Localized: "{0}"),
-            (Reference: "{0}", Localized: "{name}"),
-            (Reference: "{0}", Localized: "{0"),
-            (Reference: "{{0}}", Localized: "{0}")
-        };
-        for (var index = 0; index < cases.Length; index++)
-        {
-            consumer.Write($"Case{index}.cs", $$"""
-                using Talby.Core.ResxAccess;
-                [GenerateResxAccess("Resources/Case{{index}}.resx", ExpectedCultures = new[] { "es" })]
-                public static class Case{{index}}
-                {
-                }
-                """);
-            consumer.Write($"Resources/Case{index}.resx", ResourceXml("omitted-key", cases[index].Reference));
-            consumer.Write($"Resources/Case{index}.es.resx", ResourceXml("omitted-key", cases[index].Reference));
-            consumer.Write($"Resources/Case{index}.fr.resx", ResourceXml("omitted-key", cases[index].Localized));
-        }
-
-        var build = await consumer.Build();
+        var build = await diagnostics.BuildDiagnostics();
         Assert.NotEqual(0, build.ExitCode);
-        for (var index = 0; index < cases.Length; index++)
+        for (var index = 0; index < ChangedPlaceholderCases.Length; index++)
         {
-            Assert.Contains($"error TRESX004: Invalid Localized Resource: 'Resources/Case{index}.fr.resx' Resource Key 'omitted-key'", build.Output);
+            Assert.True(build.Output.Split('\n').Any(line => line.Contains($"Changed{index}.cs(", StringComparison.Ordinal)
+                && line.Contains($"error TRESX004: Invalid Localized Resource: 'Resources/Changed{index}.fr.resx' Resource Key 'omitted-key'", StringComparison.Ordinal)), build.Output);
         }
         Assert.DoesNotContain("LAMA0041", build.Output);
     }
 
     private static string ResourceXml(string key, string text)
         => new System.Xml.Linq.XElement("root", new System.Xml.Linq.XElement("data", new System.Xml.Linq.XAttribute("name", key), new System.Xml.Linq.XElement("value", text))).ToString();
+
+    internal static void WriteMalformedPlaceholders(ConsumerProject consumer)
+    {
+        for (var index = 0; index < InvalidPlaceholderText.Length; index++)
+        {
+            consumer.Write($"Malformed{index}.cs", $$"""
+                using Talby.Core.ResxAccess;
+                [GenerateResxAccess("Resources/Malformed{{index}}.resx")]
+                public static class Malformed{{index}}
+                {
+                }
+                """);
+            consumer.Write($"Resources/Malformed{index}.resx", ResourceXml("Bad", InvalidPlaceholderText[index]));
+        }
+    }
+
+    internal static void WriteChangedPlaceholderContracts(ConsumerProject consumer)
+    {
+        for (var index = 0; index < ChangedPlaceholderCases.Length; index++)
+        {
+            consumer.Write($"Changed{index}.cs", $$"""
+                using Talby.Core.ResxAccess;
+                [GenerateResxAccess("Resources/Changed{{index}}.resx", ExpectedCultures = new[] { "es" })]
+                public static class Changed{{index}}
+                {
+                }
+                """);
+            consumer.Write($"Resources/Changed{index}.resx", ResourceXml("omitted-key", ChangedPlaceholderCases[index].Reference));
+            consumer.Write($"Resources/Changed{index}.es.resx", ResourceXml("omitted-key", ChangedPlaceholderCases[index].Reference));
+            consumer.Write($"Resources/Changed{index}.fr.resx", ResourceXml("omitted-key", ChangedPlaceholderCases[index].Localized));
+        }
+    }
 }

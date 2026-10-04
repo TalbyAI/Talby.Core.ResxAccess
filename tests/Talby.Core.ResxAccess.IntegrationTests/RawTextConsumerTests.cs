@@ -4,6 +4,22 @@ namespace Talby.Core.ResxAccess.IntegrationTests;
 [Collection("SDK consumer builds")]
 public class RawTextConsumerTests
 {
+    private readonly ConsumerDiagnosticsFixture diagnostics;
+
+    public RawTextConsumerTests(ConsumerDiagnosticsFixture diagnostics)
+    {
+        this.diagnostics = diagnostics;
+    }
+
+    private static readonly (string Target, string Resource, string Code, string Message)[] InvalidResourceCases = new[]
+    {
+        (Target: "LogicalNameTarget", Resource: "Resources/LogicalName.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/LogicalName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
+        (Target: "ManifestResourceNameTarget", Resource: "Resources/ManifestResourceName.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/ManifestResourceName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
+        (Target: "LinkedTarget", Resource: "Resources/Linked.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/Linked.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
+        (Target: "MissingResourceTarget", Resource: "Resources/Missing.resx", Code: "TRESX001", Message: "Invalid Reference Resource: 'Resources/Missing.resx' does not exist in the consumer project."),
+        (Target: "LocalizedResourceTarget", Resource: "Resources/Localized.es.resx", Code: "TRESX001", Message: "Invalid Reference Resource: 'Resources/Localized.es.resx' is culture-specific; select the culture-neutral Reference Resource.")
+    };
+
     internal const string ReferenceResource = """
         <root>
           <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
@@ -26,38 +42,10 @@ public class RawTextConsumerTests
     [Fact]
     public async Task ReportsEachInvalidResourceAndEmbeddingInOneBuild()
     {
-        using var consumer = new ConsumerProject("Console.WriteLine(\"Unused\");", projectItems: """
-            <EmbeddedResource Update="Resources/LogicalName.resx"><LogicalName>Custom.LogicalName.resources</LogicalName></EmbeddedResource>
-            <EmbeddedResource Update="Resources/ManifestResourceName.resx"><ManifestResourceName>Custom.ManifestResourceName</ManifestResourceName></EmbeddedResource>
-            <EmbeddedResource Update="Resources/Linked.resx"><Link>Other/Linked.resx</Link></EmbeddedResource>
-            """);
-        var cases = new[]
-        {
-            (Target: "LogicalNameTarget", Resource: "Resources/LogicalName.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/LogicalName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
-            (Target: "ManifestResourceNameTarget", Resource: "Resources/ManifestResourceName.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/ManifestResourceName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
-            (Target: "LinkedTarget", Resource: "Resources/Linked.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/Linked.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
-            (Target: "MissingResourceTarget", Resource: "Resources/Missing.resx", Code: "TRESX001", Message: "Invalid Reference Resource: 'Resources/Missing.resx' does not exist in the consumer project."),
-            (Target: "LocalizedResourceTarget", Resource: "Resources/Localized.es.resx", Code: "TRESX001", Message: "Invalid Reference Resource: 'Resources/Localized.es.resx' is culture-specific; select the culture-neutral Reference Resource.")
-        };
-        foreach (var (target, resource, _, _) in cases)
-        {
-            consumer.Write($"{target}.cs", $$"""
-                using Talby.Core.ResxAccess;
-                [GenerateResxAccess("{{resource}}")]
-                public static class {{target}}
-                {
-                }
-                """);
-            if (target != "MissingResourceTarget")
-            {
-                consumer.Write(resource, ReferenceResource);
-            }
-        }
-
-        var build = await consumer.Build();
+        var build = await diagnostics.BuildDiagnostics();
         Assert.NotEqual(0, build.ExitCode);
         var diagnosticLines = build.Output.Split('\n');
-        foreach (var (target, _, code, message) in cases)
+        foreach (var (target, _, code, message) in InvalidResourceCases)
         {
             Assert.Contains(diagnosticLines, line => line.Contains($"{target}.cs(", StringComparison.Ordinal) && line.Contains($"error {code}: {message}", StringComparison.Ordinal));
         }
@@ -66,17 +54,7 @@ public class RawTextConsumerTests
     [Fact]
     public async Task ReportsMalformedReferenceResourceWithoutAspectCrash()
     {
-        using var consumer = new ConsumerProject("""
-            using Talby.Core.ResxAccess;
-            Console.WriteLine("Unused");
-            [GenerateResxAccess("Resources/Labels.resx")]
-            public static class Texts
-            {
-            }
-            """);
-        consumer.Write("Resources/Labels.resx", "<root><data>");
-
-        var build = await consumer.Build();
+        var build = await diagnostics.BuildMalformedResource();
         Assert.NotEqual(0, build.ExitCode);
         Assert.Contains("error MSB3103", build.Output);
         Assert.DoesNotContain("LAMA0041", build.Output);
@@ -90,6 +68,24 @@ public class RawTextConsumerTests
             var invocation = await ConsumerProject.Invoke(typeof(Customer.Api.AssociatedTexts).Assembly.Location, scenario);
             Assert.True(invocation.ExitCode == 0, invocation.Output);
             Assert.Equal("Descriptive failure", invocation.Output.Trim());
+        }
+    }
+
+    internal static void WriteInvalidResources(ConsumerProject consumer)
+    {
+        foreach (var (target, resource, _, _) in InvalidResourceCases)
+        {
+            consumer.Write($"{target}.cs", $$"""
+                using Talby.Core.ResxAccess;
+                [GenerateResxAccess("{{resource}}")]
+                public static class {{target}}
+                {
+                }
+                """);
+            if (target != "MissingResourceTarget")
+            {
+                consumer.Write(resource, ReferenceResource);
+            }
         }
     }
 }

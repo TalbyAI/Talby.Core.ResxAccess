@@ -119,8 +119,15 @@ The solution contains three test projects:
 - `Talby.Core.ResxAccess.IntegrationTests`: sixteen SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
 - `Talby.Core.ResxAccess.AspectTests`: twelve dedicated Metalama snapshot tests.
 
-The integration test classes share an xUnit collection so their temporary SDK
-consumer builds cannot concurrently overwrite the referenced library's outputs.
+The integration test classes share an xUnit collection fixture that caches one
+build for seven compatible diagnostic tests. Malformed XML uses a separate
+consumer project because SDK resource generation fails before aspects execute.
+The fixture starts these two builds concurrently, with isolated consumer bin/obj
+directories. `ConsumerProject.Build()` sets `BuildProjectReferences=false` and
+`RestoreRecursive=false`: it reuses the library's Release outputs and restores
+only the fresh consumer. A current Release solution restore/build is required,
+including after library or fixture changes; child builds do not check whether
+the referenced library is up to date.
 
 Run either ordinary test project independently after the solution build:
 
@@ -202,16 +209,26 @@ keeps `MetalamaRemoveCompileTimeOnlyCode=false`.
 solution. Metalama processes its aspects; ordinary tests still keep
 `MetalamaEnabled=false`. IntegrationTests references the fixture so its assembly,
 runtime configuration, and satellite assemblies are copied to the test output.
-Runtime tests invoke that output in three fresh processes, retaining culture and
+Runtime tests invoke that output in fresh processes, retaining culture and
 process isolation without rebuilding a consumer for each scenario.
 
 Positive Resource Sets keep real SDK embedding. A fixture-only target removes
 the missing-manifest Resource Set and replaces only the missing-Resource-Key
-Resource Set. The grouped invalid-consumer and malformed XML tests still create
-isolated temporary SDK projects and build from a different working directory.
-Full execution now starts two temporary SDK builds instead of five, preserving
-every test identity and assertion. Malformed XML is diagnosed by SDK resource
-generation before the aspect executes (`MSB3103`).
+Resource Set. Canonical and lowercase Localized Resource cultures use two
+independent fixture Resource Sets, with `es-MX` and `es-mx` satellite suffixes
+and uppercase `ExpectedCultures`. Their runtime test invokes the `culture-casing`
+scenario and requires distinct Translations from both Resource Sets.
+
+Diagnostic tests still create isolated temporary SDK projects and build from a
+different working directory. Full execution starts two temporary SDK builds
+instead of nine: seven compatible diagnostic tests share one compilation and
+the malformed XML test uses another. Every test identity is preserved, so the
+31 fast / 47 full inventory in `tests/run.ps1` is unchanged. Grouped assertions
+require the target source file, diagnostic code, and expected message on the
+same output line. Malformed XML is diagnosed by SDK resource generation before
+the aspect executes (`MSB3103`). The shared builds start lazily: runtime-only
+filtered runs do not compile temporary consumers. Filtering any diagnostic test
+starts both builds, and its test duration includes their shared setup cost.
 
 Rebuild the solution after changing fixture source or `.resx` files before using
 `--no-build`. A successful fixture build alone does not execute its runtime
