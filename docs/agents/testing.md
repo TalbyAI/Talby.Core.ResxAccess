@@ -12,8 +12,12 @@ Read this before adding tests, grouping scenarios, or optimizing test execution.
 
 Use the narrowest boundary that reaches the real behavior. Preserve IntegrationTests
 for SDK and runtime contracts that deterministic snapshot inputs bypass. Fast runs
-UnitTests and AspectTests; full includes every IntegrationTest and is required
-before merge. Rebuild Release outputs after source or resource changes.
+the explicit `$fastProjects` list in `tests/run.ps1` (currently UnitTests and
+AspectTests); full runs every test project in the solution and is required
+before merge. Add new test projects to the solution, and update `$fastProjects`
+only if they should also run in fast. The runner uses automatic test discovery
+and validates TRX results, without a fixed test-name inventory. Rebuild Release
+outputs after source or resource changes.
 
 ## Group compatible diagnostic cases
 
@@ -32,8 +36,9 @@ diagnostic code and expected message on the same output line.
 
 Keep generation and DesignTime baselines that cover distinct output contracts.
 Preserve output-compilation checks and real runtime assertions. Report changed
-test identities, compilation isolation and failure granularity; update
-`tests/run.ps1`, current documentation and inventory counts together.
+test identities, compilation isolation and failure granularity; update current
+documentation and any reported inventory counts together. Adding, grouping or
+renaming tests within an existing project does not require a runner change.
 
 When introducing a grouped diagnostic compilation, run at least one temporary
 negative control per behavior group: correct one invalid input so its expected

@@ -289,43 +289,29 @@ pwsh -NoProfile -File tests/run.ps1 -Mode fast
 pwsh -NoProfile -File tests/run.ps1 -Mode full
 ```
 
-Fast selects the UnitTests and AspectTests projects and defers the IntegrationTests
-project with four `RawTextConsumerTests`:
-`CanCompileAndInvokeIndependentResourceSets`,
-`ReportsEachInvalidResourceAndEmbeddingInOneBuild`,
-`ReportsMalformedReferenceResourceWithoutAspectCrash`, and
-`DescribesMissingRuntimeManifestAndResourceKey`, plus six `LocalizedResourceConsumerTests`:
-`CanInvokeSatelliteResourcesWithDefaultAndExplicitCulture`,
-`RejectsUnsupportedLocalizedResourceCultureCasing`,
-`CanInvokeCanonicalAndLowercaseLocalizedResourceCultures`,
-`RejectsInconsistentLocalizedResourcesOutsideExpectedCultures`,
-`ReportsMissingAndInvalidExpectedCultures`, and
-`RejectsLocalizedResourcesWithoutStandardSatelliteEmbedding`, plus six `IndexedPlaceholderConsumerTests`
-covering generated signatures, independent cultures, composite formatting, runtime
-failures, malformed syntax, and Localized Resource Placeholder Contracts, plus seven
-`NamedPlaceholderConsumerTests` covering all supported Argument Types/nullability,
-Named and mixed parameter order, formats, cultures, precise diagnostics, and
-compiler enforcement, plus five `ResourceKeyIdentifierConsumerTests` covering
-deterministic normalization, escaped names, omission policies, collisions and
-validation of omitted entries, plus six `IncrementalBuildConsumerTests` covering
-resource-only text and signature edits, precise diagnostics and correction,
-discovery, additions/removals, Expected Cultures, omitted entries and resources
-excluded from embedding. These use isolated `ConsumerProject` builds and fresh
-runtime processes. Their fixture excludes Metalama's unconditional build signal
-from compiler inputs so it cannot mask missing resource dependencies; an
-unchanged consumer build must preserve its assembly timestamp. See the
-[incremental build report](.scratch/resource-access/results/06-incremental-builds.md).
-Its output names the deferred
-tests. Fast success does not verify generation or runtime lookup end to end.
-Full applies no filter; the standard solution-level `dotnet test` command above
-also continues to select every test.
+Fast selects the explicit `$fastProjects` list in `tests/run.ps1`, currently
+UnitTests and AspectTests. Other solution test projects are deferred. IntegrationTests
+covers SDK embedding, runtime lookup and culture selection, compiler diagnostics,
+and incremental resource-only builds. Fast success does not verify generation or
+runtime lookup end to end. See the
+[incremental build report](.scratch/resource-access/results/06-incremental-builds.md)
+for the resource dependency checks.
 
-Each entry point propagates test failures and checks the passed TRX identities
-against the fixed inventory (32 fast, 66 full), rejecting
-empty, skipped, missing, duplicate, or unexpected selections. Adding, grouping,
-or renaming tests requires reviewing and updating that inventory in `tests/run.ps1`.
-Unique TRX directories under ignored `test-results/execution/` prevent stale
-results from satisfying the check.
+Full invokes the solution without a filter, including every test project registered
+in it. The standard solution-level `dotnet test` command above also continues to
+select every test. Add new test projects to the solution for full execution; update
+`$fastProjects` only when changing fast project selection. Adding, grouping or
+renaming tests within an existing project does not require a runner change.
+
+Each entry point propagates test failures and validates the generated TRX results.
+An empty fast project selection is rejected.
+Every invocation must produce at least one TRX file, every file must contain test
+results, and every recorded outcome must be `Passed`; skipped tests are rejected.
+The runner reports the actual passed count without maintaining test names or fixed
+counts. It does not detect individual tests that disappear from discovery.
+Unique directories under ignored `test-results/execution/`, with a subdirectory
+per invocation, prevent stale results from satisfying the check. The results path
+is printed before execution so it is also available when a run fails.
 
 CI-ready full verification from the repository root:
 
@@ -342,7 +328,7 @@ The [GitHub Actions workflow](.github/workflows/validate.yml) runs on pull
 requests, pushes to `main` and manual dispatch. It sets up the SDK from
 `global.json` and Node.js 24, restores .NET tools, runs `npm ci`, checks formatting,
 restores the solution, builds Release and runs `tests/run.ps1 -Mode full`.
-Every command must succeed; full execution validates all 66 test identities.
+Every command must succeed; full execution validates the recorded test outcomes.
 TRX results are retained as artifacts even when tests fail. Hooks are disabled
 in CI; formatting checks do not modify files. Git hooks can be bypassed locally,
 so require the `Format, build and test` check through branch protection when
