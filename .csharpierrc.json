@@ -1,0 +1,14 @@
+{
+  "printWidth": 100,
+  "useTabs": false,
+  "indentSize": 4,
+  "endOfLine": "auto",
+  "xmlWhitespaceSensitivity": "strict",
+  "overrides": [
+    {
+      "files": "*.{config,csproj,props,slnx,targets,xml}",
+      "formatter": "xml",
+      "indentSize": 2
+    }
+  ]
+}

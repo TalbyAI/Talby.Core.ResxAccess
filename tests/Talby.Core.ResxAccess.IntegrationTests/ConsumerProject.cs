@@ -5,12 +5,20 @@ namespace Talby.Core.ResxAccess.IntegrationTests;
 
 internal sealed class ConsumerProject : IDisposable
 {
-    public string DirectoryPath { get; } = Path.Combine(Path.GetTempPath(), "ResxAccessTests", Guid.NewGuid().ToString("N"));
+    public string DirectoryPath { get; } =
+        Path.Combine(Path.GetTempPath(), "ResxAccessTests", Guid.NewGuid().ToString("N"));
 
-    public ConsumerProject(string source, string projectItems = "", string projectProperties = "", string projectTargets = "")
+    public ConsumerProject(
+        string source,
+        string projectItems = "",
+        string projectProperties = "",
+        string projectTargets = ""
+    )
     {
         var repository = FindRepository();
-        Write("Consumer.csproj", $$"""
+        Write(
+            "Consumer.csproj",
+            $$"""
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
                 <OutputType>Exe</OutputType>
@@ -21,13 +29,21 @@ internal sealed class ConsumerProject : IDisposable
                 {{projectProperties}}
               </PropertyGroup>
               <ItemGroup>
-                <ProjectReference Include="{{SecurityElement.Escape(Path.Combine(repository, "src/Talby.Core.ResxAccess/Talby.Core.ResxAccess.csproj"))}}" />
+                <ProjectReference Include="{{SecurityElement.Escape(
+                Path.Combine(repository, "src/Talby.Core.ResxAccess/Talby.Core.ResxAccess.csproj")
+            )}}" />
                 {{projectItems}}
               </ItemGroup>
-              <Import Project="{{SecurityElement.Escape(Path.Combine(repository, "src/Talby.Core.ResxAccess/buildTransitive/Talby.Core.ResxAccess.targets"))}}" />
+              <Import Project="{{SecurityElement.Escape(
+                Path.Combine(
+                    repository,
+                    "src/Talby.Core.ResxAccess/buildTransitive/Talby.Core.ResxAccess.targets"
+                )
+            )}}" />
               {{projectTargets}}
             </Project>
-            """);
+            """
+        );
         Write("Program.cs", source);
     }
 
@@ -41,11 +57,23 @@ internal sealed class ConsumerProject : IDisposable
     public async Task<(int ExitCode, string Output)> Build()
         // The current Release solution build supplies the library and its Metalama outputs.
         // Restore only the fresh consumer so the reference's obj directory stays read-only.
-        => await Run("build", Path.Combine(DirectoryPath, "Consumer.csproj"), "--configuration", "Release", "--nologo", "--verbosity", "quiet",
-            "-p:BuildProjectReferences=false", "-p:RestoreRecursive=false");
+        =>
+        await Run(
+            "build",
+            Path.Combine(DirectoryPath, "Consumer.csproj"),
+            "--configuration",
+            "Release",
+            "--nologo",
+            "--verbosity",
+            "quiet",
+            "-p:BuildProjectReferences=false",
+            "-p:RestoreRecursive=false"
+        );
 
-    public static async Task<(int ExitCode, string Output)> Invoke(string assemblyPath, params string[] arguments)
-        => await Run([assemblyPath, .. arguments]);
+    public static async Task<(int ExitCode, string Output)> Invoke(
+        string assemblyPath,
+        params string[] arguments
+    ) => await Run([assemblyPath, .. arguments]);
 
     private static async Task<(int ExitCode, string Output)> Run(params string[] arguments)
     {
@@ -54,7 +82,7 @@ internal sealed class ConsumerProject : IDisposable
             WorkingDirectory = Path.GetTempPath(),
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            CreateNoWindow = true
+            CreateNoWindow = true,
         };
         foreach (var argument in arguments)
         {
@@ -81,12 +109,16 @@ internal sealed class ConsumerProject : IDisposable
     private static string FindRepository()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Talby.Core.ResxAccess.slnx")))
+        while (
+            directory is not null
+            && !File.Exists(Path.Combine(directory.FullName, "Talby.Core.ResxAccess.slnx"))
+        )
         {
             directory = directory.Parent;
         }
 
-        return directory?.FullName ?? throw new InvalidOperationException("Cannot find the repository.");
+        return directory?.FullName
+            ?? throw new InvalidOperationException("Cannot find the repository.");
     }
 
     public void Dispose() => Directory.Delete(DirectoryPath, recursive: true);

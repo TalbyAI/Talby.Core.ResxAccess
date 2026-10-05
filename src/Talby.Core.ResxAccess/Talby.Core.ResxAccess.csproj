@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -11,7 +10,10 @@
     <InternalsVisibleTo Include="Talby.Core.ResxAccess.UnitTests" />
     <InternalsVisibleTo Include="Talby.Core.ResxAccess.AspectTests" />
     <PackageReference Include="Metalama.Framework" Version="2026.1.28" />
-    <None Include="buildTransitive/Talby.Core.ResxAccess.targets" Pack="true" PackagePath="buildTransitive/" />
+    <None
+      Include="buildTransitive/Talby.Core.ResxAccess.targets"
+      Pack="true"
+      PackagePath="buildTransitive/"
+    />
   </ItemGroup>
-
 </Project>

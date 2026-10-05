@@ -107,6 +107,61 @@ in the consumer project (adjust paths to your layout):
 <Import Project="../src/Talby.Core.ResxAccess/buildTransitive/Talby.Core.ResxAccess.targets" />
 ```
 
+## Formatting and staged-file checks
+
+Install Node.js 24 with npm, alongside the .NET SDK specified below. Tooling is
+local to the repository: CSharpier is pinned in `.config/dotnet-tools.json`, and
+markdownlint-cli2, Husky and lint-staged are pinned in `package.json` and
+`package-lock.json`. No global formatter installation is required.
+
+Run from the repository root after cloning:
+
+```powershell
+dotnet tool restore
+npm ci
+```
+
+`npm ci` installs the pre-commit hook through Husky. Ensure Git, Node.js, npm and
+dotnet are available on the PATH used by your Git client. Restore the tools again
+after their manifest or lockfile changes.
+
+```powershell
+# Format C# and Project XML, and fix supported Markdown issues.
+npm run format
+
+# Verify formatting without changing files; also used by CI.
+npm run format:check
+
+# Run the pre-commit checks manually on staged files.
+npm run format:staged
+```
+
+CSharpier uses four-space C# indentation, two-space Project XML indentation and
+preserves existing line endings. markdownlint-cli2 applies the default Markdown
+rules except line length (`MD013`), allowing long commands and tables. Some
+Markdown errors require manual correction; `format` and the hook fail if errors
+remain after automatic fixes.
+
+The pre-commit hook formats staged C#/Project XML and Markdown files, stages its
+fixes, and blocks the commit on remaining errors. lint-staged preserves unstaged
+changes in partially staged files. Markdown checks use `--no-globs` in the hook
+so unrelated documents are not scanned.
+
+Both tools exclude the top-level `prototypes/` directory, dependencies and
+generated output (`bin/`, `obj/`, `artifacts/`, `test-results/`). CSharpier also
+excludes `.resx` and Metalama output snapshots (`*.t.cs`, `*.i.cs`), whose format
+is owned by the snapshot runner. Keep all future prototypes under root
+`prototypes/`; no prototype directory or implementation is currently required.
+Repository Markdown includes `README.md`, `AGENTS.md`, `CONTEXT.md`, `docs/` and
+the local issues/specifications in `.scratch/`.
+
+The current npm dependency audit reports a high-severity advisory in `braces`,
+a transitive dependency of markdownlint-cli2, with no patched release available:
+[GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
+It concerns stack exhaustion from deeply nested glob patterns. The commands
+above use repository-controlled patterns; this is development tooling and is
+not a runtime dependency of the library. Review the advisory when updating tools.
+
 ## Build and test
 
 Install .NET SDK 10.0.401 or a later patch in the 10.0.4xx feature band,
@@ -203,8 +258,18 @@ pwsh -NoProfile -File tests/run.ps1 -Mode full
 exit $LASTEXITCODE
 ```
 
-No CI provider is configured, so this requirement is documented rather than
-automatically enforced. The [experiment report](.scratch/test-policy/results/01-execution.md)
+The [GitHub Actions workflow](.github/workflows/validate.yml) runs on pull
+requests, pushes to `main` and manual dispatch. It sets up the SDK from
+`global.json` and Node.js 24, restores .NET tools, runs `npm ci`, checks formatting,
+restores the solution, builds Release and runs `tests/run.ps1 -Mode full`.
+Every command must succeed; full execution validates all 43 test identities.
+TRX results are retained as artifacts even when tests fail. Hooks are disabled
+in CI; formatting checks do not modify files. Git hooks can be bypassed locally,
+so require the `Format, build and test` check through branch protection when
+merge blocking is needed. Deployment and branch protection settings are not
+configured by this workflow.
+
+The [experiment report](.scratch/test-policy/results/01-execution.md)
 contains measurements, selection checks, and the unchanged assertion inventory.
 Experiment 01 was merged in PR #1. The project split retained its optional local
 fast route and complete verification gate; that historical experiment did not

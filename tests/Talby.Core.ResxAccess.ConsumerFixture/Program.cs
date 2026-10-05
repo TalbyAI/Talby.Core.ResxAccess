@@ -41,7 +41,7 @@ if (args.Length > 0)
     {
         "missing-manifest" => true,
         "missing-key" => false,
-        _ => throw new ArgumentException("Unknown runtime scenario.")
+        _ => throw new ArgumentException("Unknown runtime scenario."),
     };
     var manifestBaseName = missingManifest
         ? "ConsumerRoot.Resources.MissingManifest"
@@ -60,7 +60,11 @@ if (args.Length > 0)
     }
     catch (InvalidOperationException exception)
     {
-        if (!exception.Message.Contains("Plain") || !exception.Message.Contains(manifestBaseName) || !exception.Message.Contains("de-DE"))
+        if (
+            !exception.Message.Contains("Plain")
+            || !exception.Message.Contains(manifestBaseName)
+            || !exception.Message.Contains("de-DE")
+        )
         {
             throw;
         }
@@ -86,7 +90,11 @@ try
     {
         throw new Exception("Class identity changed.");
     }
-    var methods = type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly);
+    var methods = type.GetMethods(
+        System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.Static
+            | System.Reflection.BindingFlags.DeclaredOnly
+    );
     if (methods.Length != 4 || methods.Any(m => m.Name.StartsWith("Format")))
     {
         throw new Exception("Unexpected API.");
@@ -107,13 +115,17 @@ try
         Customer.Api.AssociatedTexts.Plain(null!);
         throw new Exception("Null culture accepted.");
     }
-    catch (ArgumentNullException)
-    {
-    }
+    catch (ArgumentNullException) { }
 
     CultureInfo.CurrentCulture = originalCulture;
     CultureInfo.CurrentUICulture = originalUICulture;
-    if (Customer.Api.EdgeTexts.Plain() != "Edge text" || Customer.Api.EdgeTexts.@class() != "Keyword" || Customer.Api.EdgeTexts.Café() != "Unicode" || Customer.Api.EdgeTexts.Empty() != "" || Customer.Api.EdgeTexts.Blank() != "   ")
+    if (
+        Customer.Api.EdgeTexts.Plain() != "Edge text"
+        || Customer.Api.EdgeTexts.@class() != "Keyword"
+        || Customer.Api.EdgeTexts.Café() != "Unicode"
+        || Customer.Api.EdgeTexts.Empty() != ""
+        || Customer.Api.EdgeTexts.Blank() != "   "
+    )
     {
         throw new Exception("Raw Text changed.");
     }

@@ -1,0 +1,14 @@
+# Future prototypes belong in this top-level directory.
+/prototypes/
+
+# Metalama owns the formatting of expected output snapshots.
+**/*.t.cs
+**/*.i.cs
+
+# Resource text and generated output are not formatter inputs.
+**/*.resx
+**/bin/
+**/obj/
+**/artifacts/
+**/test-results/
+**/node_modules/

@@ -15,7 +15,11 @@ internal sealed class DeterministicResxAccessAttribute : TypeAspect
 
     public string[]? ExpectedCultures { get; set; }
 
-    public DeterministicResxAccessAttribute(string xml, string metadata = "ConsumerRoot.Resources.Labels||||false", string? localizedXml = null)
+    public DeterministicResxAccessAttribute(
+        string xml,
+        string metadata = "ConsumerRoot.Resources.Labels||||false",
+        string? localizedXml = null
+    )
     {
         _xml = xml;
         _metadata = metadata;
@@ -24,7 +28,11 @@ internal sealed class DeterministicResxAccessAttribute : TypeAspect
 
     public override void BuildAspect(IAspectBuilder<INamedType> builder)
     {
-        var directory = Path.Combine(Path.GetTempPath(), "ResxAccessAspectTests", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            "ResxAccessAspectTests",
+            Guid.NewGuid().ToString("N")
+        );
         Directory.CreateDirectory(directory);
         try
         {
@@ -36,9 +44,18 @@ internal sealed class DeterministicResxAccessAttribute : TypeAspect
             {
                 var localizedPath = Path.Combine(directory, "Labels.es.resx");
                 File.WriteAllText(localizedPath, _localizedXml);
-                File.AppendAllText(mapPath, $"\n{localizedPath}|{_metadata.Split(new[] { '|' })[0]}.es||||true");
+                File.AppendAllText(
+                    mapPath,
+                    $"\n{localizedPath}|{_metadata.Split(new[] { '|' })[0]}.es||||true"
+                );
             }
-            ResxAccessImplementation.Build(builder, "Labels.resx", Path.Combine(directory, "Consumer.csproj"), mapPath, ExpectedCultures);
+            ResxAccessImplementation.Build(
+                builder,
+                "Labels.resx",
+                Path.Combine(directory, "Consumer.csproj"),
+                mapPath,
+                ExpectedCultures
+            );
         }
         finally
         {

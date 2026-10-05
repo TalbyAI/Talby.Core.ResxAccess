@@ -23,38 +23,63 @@ public sealed class GenerateResxAccessAttribute : TypeAspect
     {
         var project = builder.Target.Compilation.Project;
         project.TryGetProperty("TalbyResxResourceMap", out var resourceMap);
-        ResxAccessImplementation.Build(builder, _referenceResource, project.Path, resourceMap, ExpectedCultures);
+        ResxAccessImplementation.Build(
+            builder,
+            _referenceResource,
+            project.Path,
+            resourceMap,
+            ExpectedCultures
+        );
     }
 
     [Template]
-    private static readonly ResourceManager __resxResourceManager = new((string)meta.Tags["ManifestBaseName"]!, meta.Target.Type.ToType().Assembly);
+    private static readonly ResourceManager __resxResourceManager = new(
+        (string)meta.Tags["ManifestBaseName"]!,
+        meta.Target.Type.ToType().Assembly
+    );
 
     [Template]
-    public static string RawText([CompileTime] IMethod cultureMethod)
-        => cultureMethod.Invoke(CultureInfo.CurrentUICulture)!;
+    public static string RawText([CompileTime] IMethod cultureMethod) =>
+        cultureMethod.Invoke(CultureInfo.CurrentUICulture)!;
 
     [Template]
-    public static string RawTextWithCulture(CultureInfo resourceCulture, [CompileTime] string key, [CompileTime] IField resourceManagerField)
+    public static string RawTextWithCulture(
+        CultureInfo resourceCulture,
+        [CompileTime] string key,
+        [CompileTime] IField resourceManagerField
+    )
     {
         ArgumentNullException.ThrowIfNull(resourceCulture);
         var resourceManager = (ResourceManager)resourceManagerField.Value!;
         try
         {
             return resourceManager.GetString(key, resourceCulture)
-                ?? throw new InvalidOperationException($"Resource Key '{key}' was not found in '{resourceManager.BaseName}' for Resource Culture '{resourceCulture.Name}'.");
+                ?? throw new InvalidOperationException(
+                    $"Resource Key '{key}' was not found in '{resourceManager.BaseName}' for Resource Culture '{resourceCulture.Name}'."
+                );
         }
         catch (MissingManifestResourceException exception)
         {
-            throw new InvalidOperationException($"Reference Resource '{resourceManager.BaseName}' could not be loaded for Resource Key '{key}' and Resource Culture '{resourceCulture.Name}'.", exception);
+            throw new InvalidOperationException(
+                $"Reference Resource '{resourceManager.BaseName}' could not be loaded for Resource Key '{key}' and Resource Culture '{resourceCulture.Name}'.",
+                exception
+            );
         }
         catch (MissingSatelliteAssemblyException exception)
         {
-            throw new InvalidOperationException($"Satellite resources for '{resourceManager.BaseName}' could not be loaded for Resource Key '{key}' and Resource Culture '{resourceCulture.Name}'.", exception);
+            throw new InvalidOperationException(
+                $"Satellite resources for '{resourceManager.BaseName}' could not be loaded for Resource Key '{key}' and Resource Culture '{resourceCulture.Name}'.",
+                exception
+            );
         }
     }
 
     [Template]
-    public static string FormattedText([CompileTime] IMethod rawTextMethod, [CompileTime] int[] indices, [CompileTime] int cultureCount)
+    public static string FormattedText(
+        [CompileTime] IMethod rawTextMethod,
+        [CompileTime] int[] indices,
+        [CompileTime] int cultureCount
+    )
     {
         var resourceCulture = CultureInfo.CurrentUICulture;
         var formattingCulture = CultureInfo.CurrentCulture;

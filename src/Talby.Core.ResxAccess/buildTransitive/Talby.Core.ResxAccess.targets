@@ -13,13 +13,20 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="TalbyWriteResourceMap" BeforeTargets="GenerateMSBuildEditorConfigFileCore" DependsOnTargets="CreateManifestResourceNames">
+  <Target
+    Name="TalbyWriteResourceMap"
+    BeforeTargets="GenerateMSBuildEditorConfigFileCore"
+    DependsOnTargets="CreateManifestResourceNames"
+  >
     <PropertyGroup>
       <TalbyResxResourceMap>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)TalbyResxResources.txt', '$(MSBuildProjectDirectory)'))</TalbyResxResourceMap>
     </PropertyGroup>
-    <WriteLinesToFile File="$(TalbyResxResourceMap)"
-                      Lines="@(EmbeddedResource->'%(FullPath)|%(ManifestResourceName)|%(TalbyLogicalName)|%(TalbyManifestResourceName)|%(Link)|%(WithCulture)')"
-                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <WriteLinesToFile
+      File="$(TalbyResxResourceMap)"
+      Lines="@(EmbeddedResource->'%(FullPath)|%(ManifestResourceName)|%(TalbyLogicalName)|%(TalbyManifestResourceName)|%(Link)|%(WithCulture)')"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true"
+    />
     <ItemGroup>
       <FileWrites Include="$(TalbyResxResourceMap)" />
     </ItemGroup>

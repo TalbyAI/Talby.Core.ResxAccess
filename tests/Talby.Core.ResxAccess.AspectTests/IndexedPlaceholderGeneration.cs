@@ -7,7 +7,7 @@
 #endif
 namespace Consumer.Api;
 
-[DeterministicResxAccess("<root><data name=\"Summary\"><value>{2} / {0:N2} / {2}</value></data><data name=\"Literal\"><value>{{0}}</value></data></root>")]
-internal static class IndexedTexts
-{
-}
+[DeterministicResxAccess(
+    "<root><data name=\"Summary\"><value>{2} / {0:N2} / {2}</value></data><data name=\"Literal\"><value>{{0}}</value></data></root>"
+)]
+internal static class IndexedTexts { }

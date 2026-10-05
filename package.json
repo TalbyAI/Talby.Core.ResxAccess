@@ -1,0 +1,22 @@
+{
+  "name": "talby-core-resxaccess-tooling",
+  "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "format": "npm run format:code && npm run format:markdown",
+    "format:check": "npm run format:code:check && npm run format:markdown:check",
+    "format:code": "dotnet csharpier format .",
+    "format:code:check": "dotnet csharpier check .",
+    "format:markdown": "markdownlint-cli2 --fix",
+    "format:markdown:check": "markdownlint-cli2",
+    "format:staged": "lint-staged"
+  },
+  "devDependencies": {
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "markdownlint-cli2": "0.23.3"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "globs": ["**/*.{md,markdown}"],
+  "gitignore": true,
+  "ignores": [
+    "prototypes/**",
+    "**/.git/**",
+    "**/bin/**",
+    "**/obj/**",
+    "**/artifacts/**",
+    "**/test-results/**",
+    "**/node_modules/**"
+  ]
+}

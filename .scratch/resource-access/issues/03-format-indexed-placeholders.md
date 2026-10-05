@@ -26,6 +26,7 @@ A consumer supplies arguments to generated `Format` methods for Resource Keys co
 ## Blocked by
 
 - [02 - Discover and validate complete Localized Resources](02-validate-localized-resources.md)
+
 ## Comments
 
 - Implemented on 2026-10-04 on `feat/indexed-placeholder-formatting`, starting from main `921bf5d`. Resource Keys with Indexed Placeholders receive three `Format` overloads with required nullable `object?` arguments in numeric identity order, including index gaps. Raw Text and standard resource lookup remain unchanged.
