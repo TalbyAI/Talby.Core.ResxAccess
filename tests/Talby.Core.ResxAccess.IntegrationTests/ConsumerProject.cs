@@ -75,6 +75,21 @@ internal sealed class ConsumerProject : IDisposable
         params string[] arguments
     ) => await Run([assemblyPath, .. arguments]);
 
+    public async Task<(int ExitCode, string Output)> DesignTimeBuild() =>
+        await Run(
+            "msbuild",
+            Path.Combine(DirectoryPath, "Consumer.csproj"),
+            "-target:Compile",
+            "-property:Configuration=Release",
+            "-property:DesignTimeBuild=true",
+            "-property:BuildingProject=false",
+            "-property:SkipCompilerExecution=true",
+            "-property:ProvideCommandLineArgs=true",
+            "-property:BuildProjectReferences=false",
+            "-getProperty:TalbyResxResourceMap",
+            "-getItem:CscCommandLineArgs,AdditionalDesignTimeBuildInput"
+        );
+
     private static async Task<(int ExitCode, string Output)> Run(params string[] arguments)
     {
         var startInfo = new ProcessStartInfo("dotnet")

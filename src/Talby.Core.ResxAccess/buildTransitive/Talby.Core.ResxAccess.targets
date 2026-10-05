@@ -7,6 +7,7 @@
       Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)"
     />
     <AdditionalFiles Include="@(_TalbyResxInputs)" />
+    <AdditionalDesignTimeBuildInput Include="@(_TalbyResxInputs)" ContentSensitive="true" />
   </ItemGroup>
 
   <!-- Capture user metadata before the SDK supplies convention-based names. -->
@@ -22,7 +23,7 @@
   <Target
     Name="TalbyWriteResourceMap"
     BeforeTargets="GenerateMSBuildEditorConfigFileCore"
-    DependsOnTargets="CreateManifestResourceNames"
+    DependsOnTargets="PrepareResourceNames"
   >
     <PropertyGroup>
       <TalbyResxResourceMap>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)TalbyResxResources.txt', '$(MSBuildProjectDirectory)'))</TalbyResxResourceMap>
@@ -38,6 +39,34 @@
       <!-- The stable map changes for additions/removals, including non-embedded resources. -->
       <AdditionalFiles Include="$(TalbyResxResourceMap)" />
       <FileWrites Include="$(TalbyResxResourceMap)" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Metalama tracks C# declarations at design time, not AdditionalFiles. -->
+  <Target
+    Name="TalbyWriteDesignTimeDependency"
+    BeforeTargets="CoreCompile"
+    DependsOnTargets="TalbyWriteResourceMap"
+    Condition="'$(DesignTimeBuild)' == 'true'"
+  >
+    <PropertyGroup>
+      <_TalbyResxDependency>$(IntermediateOutputPath)TalbyResxDependency.g.cs</_TalbyResxDependency>
+    </PropertyGroup>
+    <GetFileHash Files="@(_TalbyResxInputs);$(TalbyResxResourceMap)">
+      <Output TaskParameter="Items" ItemName="_TalbyResxHashedInputs" />
+    </GetFileHash>
+    <PropertyGroup>
+      <_TalbyResxVersion>@(_TalbyResxHashedInputs->'%(FileHash)', '')</_TalbyResxVersion>
+    </PropertyGroup>
+    <WriteLinesToFile
+      File="$(_TalbyResxDependency)"
+      Lines="namespace Talby.Core.ResxAccess.Generated { internal static class ResourceDependency { internal const string Version = &quot;$(_TalbyResxVersion)&quot;%3B } }"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true"
+    />
+    <ItemGroup>
+      <Compile Include="$(_TalbyResxDependency)" Visible="false" />
+      <FileWrites Include="$(_TalbyResxDependency)" />
     </ItemGroup>
   </Target>
 </Project>

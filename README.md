@@ -1,7 +1,8 @@
 # Talby.Core.ResxAccess
 
 Metalama generates Raw Text and formatting methods on a consumer-declared, non-generic
-static class. A `partial` declaration is not required.
+static class. Builds do not require a `partial` declaration. Metalama 2026.1.28
+requires `partial` for IDE recognition of introduced members (`LAMA0048`).
 
 ```csharp
 using System.Globalization;
@@ -164,8 +165,25 @@ Discovery includes associated resources excluded from SDK embedding, which must
 still fail validation. The map is written only when its contents change.
 Ordinary incremental consumer builds refresh Raw Text, Formatted Text, generated
 signatures and diagnostics without C# edits or cleaning. These are build-level
-guarantees; supported IDE refresh requires the separate
-[IDE verification issue](.scratch/resource-access/issues/07-refresh-ide-resource-access.md).
+guarantees. The unmet IDE integration requirements are deferred;
+[issue 07](.scratch/resource-access/issues/07-refresh-ide-resource-access.md)
+was resolved by explicit user decision to continue subsequent work, without
+establishing automatic IDE refresh.
+
+Design-time builds prepare SDK resource names, watch resource content through
+`AdditionalDesignTimeBuildInput`, and write a stable generated C# dependency under
+`obj/`. The aspect reads that declaration before validation so Metalama can track
+changes even for invalid Resource Sets. The dependency includes content hashes
+and discovery membership and is absent from ordinary compilation inputs.
+
+For VS Code, enable C# analyzer diagnostics and use `partial` consumer classes.
+The repository's `.vscode/settings.json` enables analyzer and compiler diagnostics
+for the full solution, following [Metalama's VS Code configuration](https://doc.metalama.net/conceptual/using/ide/vs-code).
+Automatic resource refresh is **not established** in the installed VS Code setup:
+C# Dev Kit fails project loading, and the standalone C# language server leaves
+the generated API stale after a resource edit. See the
+[IDE refresh evidence](.scratch/resource-access/results/07-ide-refresh.md)
+for versions, observed failures, the reproducible probe and human verification steps.
 
 ## Formatting and staged-file checks
 
@@ -238,7 +256,7 @@ dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-r
 The solution contains three test projects:
 
 - `Talby.Core.ResxAccess.UnitTests`: 20 tests of Metalama setup and shared Reference Resource validation.
-- `Talby.Core.ResxAccess.IntegrationTests`: 34 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
+- `Talby.Core.ResxAccess.IntegrationTests`: 35 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
 - `Talby.Core.ResxAccess.AspectTests`: 12 dedicated Metalama snapshot tests.
 
 The [testing criterion](docs/agents/testing.md) defines test placement,

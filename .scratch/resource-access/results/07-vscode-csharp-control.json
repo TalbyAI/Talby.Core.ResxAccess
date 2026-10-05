@@ -1,0 +1,90 @@
+[
+  {
+    "stage": "environment",
+    "time": "2026-10-05T15:30:30.157Z",
+    "vscode": "1.140.0",
+    "extensions": [
+      {
+        "id": "ms-dotnettools.csharp",
+        "version": "11.1.32"
+      },
+      {
+        "id": "ms-dotnettools.vscode-dotnet-runtime",
+        "version": "3.2.0"
+      }
+    ]
+  },
+  {
+    "stage": "initial",
+    "time": "2026-10-05T15:30:37.835Z",
+    "passed": true,
+    "hover": [
+      "```csharp\r\nstring Texts.FormatWelcome(string name) (+ 2 overloads)\r\n```\r\n  \r\n"
+    ],
+    "completion": [],
+    "diagnostics": [
+      {
+        "code": "IDE0005",
+        "message": "Using directive is unnecessary.",
+        "severity": 3
+      }
+    ]
+  },
+  {
+    "stage": "reference-contract",
+    "time": "2026-10-05T15:32:07.916Z",
+    "passed": false,
+    "hover": [
+      "```csharp\r\nstring Texts.FormatWelcome(string name) (+ 2 overloads)\r\n```\r\n  \r\n"
+    ],
+    "completion": [
+      {
+        "label": "FormatWelcome",
+        "kind": 1,
+        "documentation": "```csharp\r\nstring Texts.FormatWelcome(string name)\r\n```\r\n&nbsp;\\(\\+ 2 overloads\\)"
+      },
+      {
+        "label": "Welcome",
+        "kind": 1,
+        "documentation": "```csharp\r\nstring Texts.Welcome(System.Globalization.CultureInfo resourceCulture)\r\n```\r\n&nbsp;\\(\\+ 1 overload\\)"
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "stage": "manual-design-time-command",
+    "time": "2026-10-05T15:32:09.468Z",
+    "output": "MSBuild version 18.9.11+e34a38d2a for .NET\r\n"
+  },
+  {
+    "stage": "manual-design-time-control",
+    "time": "2026-10-05T15:32:12.524Z",
+    "passed": true,
+    "hover": [
+      "```csharp\r\nstring Texts.FormatWelcome(string name) (+ 2 overloads)\r\n```\r\n  \r\n"
+    ],
+    "completion": [
+      {
+        "label": "FormatWelcome",
+        "kind": 1,
+        "documentation": "```csharp\r\nstring Texts.FormatWelcome(string name)\r\n```\r\n&nbsp;\\(\\+ 2 overloads\\)"
+      },
+      {
+        "label": "Welcome",
+        "kind": 1,
+        "documentation": "```csharp\r\nstring Texts.Welcome(System.Globalization.CultureInfo resourceCulture)\r\n```\r\n&nbsp;\\(\\+ 1 overload\\)"
+      }
+    ],
+    "diagnostics": [
+      {
+        "code": "TRESX004",
+        "message": "Invalid Localized Resource: 'Resources/Texts.es.resx' Resource Key 'Welcome' must use exactly the Reference Resource's Placeholder Contract (arguments: person).",
+        "severity": 0
+      }
+    ]
+  },
+  {
+    "stage": "finished",
+    "time": "2026-10-05T15:32:12.524Z"
+  }
+]

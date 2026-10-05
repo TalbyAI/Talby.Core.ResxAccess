@@ -2,6 +2,10 @@
 
 Status: ready-for-agent
 
+## Current scope deferral
+
+On 2026-10-05, the user explicitly requested resolving [issue 07](issues/07-refresh-ide-resource-access.md) and deferring its unmet technical requirements so subsequent work can continue. The IDE requirements below remain the intended contract, but their implementation and verification are deferred for the current work. This includes automatic resource-only API and diagnostic refresh, non-partial IDE support, and the outstanding IDE compatibility and verification work. This decision does not claim those requirements are satisfied or change verified build behavior. The Supported IDE policy and approval of the proposed implementation changes remain undecided. Documentation must distinguish verified build behavior from the recorded IDE limitations.
+
 ## Problem Statement
 
 .NET developers maintain translated text in a Resource Set but need to write and maintain access and formatting code themselves. String-based access leaves Resource Key mistakes, inconsistent Localized Resources, and incompatible Formatting Placeholders to be discovered at runtime.

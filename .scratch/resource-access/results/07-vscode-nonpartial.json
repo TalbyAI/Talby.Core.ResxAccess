@@ -1,0 +1,45 @@
+[
+  {
+    "stage": "environment",
+    "time": "2026-10-05T15:24:12.182Z",
+    "vscode": "1.140.0",
+    "extensions": [
+      {
+        "id": "ms-dotnettools.csharp",
+        "version": "11.1.32"
+      },
+      {
+        "id": "ms-dotnettools.vscode-dotnet-runtime",
+        "version": "3.2.0"
+      }
+    ]
+  },
+  {
+    "stage": "initial",
+    "time": "2026-10-05T15:25:43.280Z",
+    "passed": false,
+    "hover": [],
+    "completion": [],
+    "diagnostics": [
+      {
+        "code": "LAMA0048",
+        "message": "Aspects add members to 'Texts' but it is not marked as 'partial'. Make the type 'partial' to make it possible to reference aspect-generated artefacts from source code.",
+        "severity": 1
+      },
+      {
+        "code": "CS0117",
+        "message": "'Texts' does not contain a definition for 'Welcome'",
+        "severity": 0
+      },
+      {
+        "code": "CS0117",
+        "message": "'Texts' does not contain a definition for 'FormatWelcome'",
+        "severity": 0
+      }
+    ]
+  },
+  {
+    "stage": "finished",
+    "time": "2026-10-05T15:25:43.280Z"
+  }
+]
