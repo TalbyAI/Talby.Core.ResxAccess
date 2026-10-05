@@ -1,6 +1,6 @@
 # Support typed Named and mixed Formatting Placeholders
 
-Status: ready-for-agent
+Status: resolved
 Type: AFK
 User stories covered: 19-23, 26-35
 
@@ -26,6 +26,12 @@ Extend generated formatting methods to Named Placeholders with optional supporte
 ## Blocked by
 
 - [03 - Generate Indexed Placeholder formatting methods](03-format-indexed-placeholders.md)
+
+## Answer
+
+Implemented and verified typed Named and mixed Formatting Placeholders. The Reference Resource defines required argument identities, order, types and nullability; every discovered Localized Resource preserves that Placeholder Contract. Generated methods retain Raw Text access and support all three Resource Culture / Formatting Culture overloads.
+
+All acceptance criteria are complete. The Release build and all 53 tests passed, including exact inventory validation. See the [coverage and verification report](../results/04-named-and-mixed.md) and the implementation record below.
 
 ## Comments
 
