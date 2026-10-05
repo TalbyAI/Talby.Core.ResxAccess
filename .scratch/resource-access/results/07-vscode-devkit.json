@@ -1,0 +1,39 @@
+[
+  {
+    "stage": "environment",
+    "time": "2026-10-05T15:35:44.678Z",
+    "vscode": "1.140.0",
+    "extensions": [
+      {
+        "id": "ms-dotnettools.csdevkit",
+        "version": "11.1.3"
+      },
+      {
+        "id": "ms-dotnettools.csharp",
+        "version": "11.1.32"
+      },
+      {
+        "id": "ms-dotnettools.vscode-dotnet-runtime",
+        "version": "3.2.0"
+      }
+    ]
+  },
+  {
+    "stage": "initial",
+    "time": "2026-10-05T15:37:15.611Z",
+    "passed": false,
+    "hover": [],
+    "completion": [],
+    "diagnostics": [
+      {
+        "code": "IDE0005",
+        "message": "Using directive is unnecessary.",
+        "severity": 3
+      }
+    ]
+  },
+  {
+    "stage": "finished",
+    "time": "2026-10-05T15:37:15.611Z"
+  }
+]

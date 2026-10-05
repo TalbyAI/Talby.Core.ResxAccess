@@ -1,5 +1,7 @@
 {
     "files.exclude": {
         "**/obj/**": false
-    }
+    },
+    "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
+    "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution"
 }

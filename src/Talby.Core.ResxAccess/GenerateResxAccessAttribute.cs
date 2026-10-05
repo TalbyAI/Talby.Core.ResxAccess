@@ -24,6 +24,17 @@ public sealed class GenerateResxAccessAttribute : TypeAspect
 
     public override void BuildAspect(IAspectBuilder<INamedType> builder)
     {
+        // Reading the generated type registers a Metalama dependency before validation,
+        // including when the Resource Set is invalid and no methods can be introduced.
+        if (
+            builder.Target.Compilation.Factory.TryGetTypeByReflectionName(
+                "Talby.Core.ResxAccess.Generated.ResourceDependency",
+                out var dependency
+            )
+        )
+        {
+            _ = dependency.Fields.Count;
+        }
         var project = builder.Target.Compilation.Project;
         project.TryGetProperty("TalbyResxResourceMap", out var resourceMap);
         ResxAccessImplementation.Build(
