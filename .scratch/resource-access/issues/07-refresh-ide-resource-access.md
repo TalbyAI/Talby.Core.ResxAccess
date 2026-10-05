@@ -1,6 +1,6 @@
 # Refresh Resource Access in the supported IDE
 
-Status: ready-for-human
+Status: resolved
 Type: HITL
 User stories covered: 51
 
@@ -12,7 +12,7 @@ User stories covered: 51
 
 Integrate external resource changes with the supported IDE so consumer completion or generated API and compilation diagnostics remain current after resource edits, additions, and removals. Deliver the integration together with reproducible IDE evidence; human participation covers observing and reviewing the supported IDE behavior.
 
-The build integration is prior evidence only. It does not prove IDE refresh, and the required IDE behavior cannot be dropped because its mechanism is uncertain.
+The build integration is prior evidence only. It does not prove IDE refresh. The user explicitly deferred the unmet technical requirements on 2026-10-05 and requested resolution so subsequent work can continue; this is a scope deferral, not technical completion.
 
 ## Acceptance criteria
 
@@ -35,3 +35,8 @@ The build integration is prior evidence only. It does not prove IDE refresh, and
 - Live extension-host probes found an installed C# Dev Kit project-loading failure involving `AddAdditionalFilesAsync` deserialization. With C# Dev Kit disabled, the C# language server loaded the consumer. A non-partial target received `LAMA0048`; adding `partial` during initial setup exposed `string Texts.FormatWelcome(string name)` in hover. A subsequent resource-only Placeholder Contract edit left that signature stale and showed no mismatch diagnostic during the 90-second observation window. The C# consumer was unchanged and no build occurred during that acceptance observation.
 - Automatic API refresh is unmet. Localized mismatch appearance/clearance and Localized Resource addition/removal/restoration remain unverified in the IDE; human observation and review remain outstanding. The issue stays `ready-for-human` and is not resolved. The [evidence and reproduction guide](../results/07-ide-refresh.md) records the failures, automated coverage and the remaining scenarios. A manually requested design-time build is a separate diagnostic control and cannot satisfy acceptance.
 - Release solution build, formatting checks and all 67 tests passed. Independent Standards review found no breaches or baseline smells; Spec review identified the recorded automatic-refresh, non-partial IDE support and editor-output coverage gaps, with no scope creep or separate code defect. The `partial` workaround is diagnostic setup, not approval to narrow the parent specification.
+- 2026-10-05: Following the review of the implementation assumptions, the user explicitly requested marking this issue `resolved` and deferring its technical requirements. This decision supersedes the earlier `ready-for-human` status and the requirement to keep the issue open when acceptance is unmet. The unchecked criteria remain unmet; no additional technical verification is claimed. Approval of the review's proposed implementation changes remains deferred.
+
+## Answer
+
+Resolved by explicit user decision to defer the technical requirements, allowing issue 08 to proceed. Automatic generated API and diagnostic refresh, Localized Resource discovery changes, non-partial IDE support, C# Dev Kit compatibility, editor-output coverage, and human verification remain unmet or unverified as recorded in the [evidence report](../results/07-ide-refresh.md). The Supported IDE policy remains undecided. Resume these requirements through a follow-up issue when the user brings IDE integration back into scope; this resolution does not authorize changes to the bridge, workspace configuration, or public API contract.

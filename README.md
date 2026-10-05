@@ -165,8 +165,10 @@ Discovery includes associated resources excluded from SDK embedding, which must
 still fail validation. The map is written only when its contents change.
 Ordinary incremental consumer builds refresh Raw Text, Formatted Text, generated
 signatures and diagnostics without C# edits or cleaning. These are build-level
-guarantees; supported IDE refresh requires the separate
-[IDE verification issue](.scratch/resource-access/issues/07-refresh-ide-resource-access.md).
+guarantees. The unmet IDE integration requirements are deferred;
+[issue 07](.scratch/resource-access/issues/07-refresh-ide-resource-access.md)
+was resolved by explicit user decision to continue subsequent work, without
+establishing automatic IDE refresh.
 
 Design-time builds prepare SDK resource names, watch resource content through
 `AdditionalDesignTimeBuildInput`, and write a stable generated C# dependency under

@@ -1,6 +1,8 @@
 # IDE Resource Access refresh
 
-Issue [07](../issues/07-refresh-ide-resource-access.md) remains `ready-for-human`.
+Issue [07](../issues/07-refresh-ide-resource-access.md) is `resolved` by the user's
+explicit decision on 2026-10-05 to defer its unmet technical requirements and
+continue subsequent work. This status does not establish technical completion.
 Automatic VS Code refresh is not established. The successful SDK checks below
 do not substitute for the required editor observations or human review.
 
@@ -176,8 +178,9 @@ The `partial` workaround does not authorize narrowing the parent specification's
 requirement that a partial declaration is unnecessary. Non-partial IDE support
 remains an unmet requirement in addition to automatic refresh and human review.
 The installed C# Dev Kit failure is another material limitation. Further integration
-work or a functioning IDE project-system configuration is required before issue 07
-can be resolved.
+work or a functioning IDE project-system configuration is required to satisfy
+the deferred technical requirements. Issue 07 was resolved by scope deferral,
+not by satisfying these requirements.
 
 ## Code review
 
