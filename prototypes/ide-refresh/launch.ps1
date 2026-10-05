@@ -52,7 +52,9 @@ foreach ($argument in @(
     '--extensionDevelopmentPath', $PSScriptRoot,
     '--extensionTestsPath', "$PSScriptRoot/run.cjs", $consumer
 )) { $start.ArgumentList.Add($argument) }
-foreach ($extension in (& code --list-extensions))
+$extensions = & code --list-extensions
+if ($LASTEXITCODE -ne 0) { throw 'Extension enumeration failed.' }
+foreach ($extension in $extensions)
 {
     $allowed = $extension -match '^ms-dotnettools\.(csharp|vscode-dotnet-runtime)$' -or
         (-not $CSharpOnly -and $extension -eq 'ms-dotnettools.csdevkit')

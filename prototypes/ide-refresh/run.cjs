@@ -58,7 +58,7 @@ exports.run = async function () {
             throw new Error('Automatic reference refresh failed; subsequent acceptance scenarios were not run');
         }
         fs.writeFileSync(path.join(directory, 'Resources/Texts.es.resx'), fs.readFileSync(path.join(directory, 'Resources/Texts.es.resx'), 'utf8').replace('{name}', '{person}'));
-        if (!await wait('localized-corrected', r => !r.diagnostics.some(d => d.code === 'TRESX004' || d.message.includes('TRESX004')))) throw new Error('Automatic localized correction refresh failed');
+        if (!await wait('localized-corrected', r => !r.timeout && !r.diagnostics.some(d => d.code === 'TRESX004' || d.message.includes('TRESX004')))) throw new Error('Automatic localized correction refresh failed');
     } finally {
         record('finished', {});
     }
