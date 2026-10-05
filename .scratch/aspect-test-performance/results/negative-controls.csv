@@ -1,0 +1,6 @@
+"Group","Target","BuildExit","TestExit","RemainingDiagnostics","OtherExpectationsPreserved"
+"Reference Resource and embedding","InvalidRoot","0","1","23","True"
+"Resource entry validation","NonTextReferenceEntry","0","1","23","True"
+"Localized Resource consistency","CaseMismatchedKey","0","1","23","True"
+"Expected Culture","MissingExpectedCulture","0","1","23","True"
+"Indexed Placeholder Contract","MalformedReference","0","1","23","True"

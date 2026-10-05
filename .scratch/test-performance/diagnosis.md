@@ -244,3 +244,97 @@ not a proof of equivalence for every possible future regression.
 Evidence: before-grouping and after-grouping-1/2 TRX files,
 grouping-negative-controls TRX, and grouping-timings.csv under the ignored
 test-results directory. No test classification policy has been introduced.
+
+## Follow-up: reuse and share consumer builds (2026-10-04)
+
+The current suite contains 47 tests: 19 UnitTests, 16 IntegrationTests, and 12
+AspectTests. Before this change, IntegrationTests started nine temporary SDK
+consumer builds, including seven compatible diagnostic groups, malformed XML,
+and the successful canonical/lowercase Localized Resource culture scenario.
+Measurements used Windows x64, SDK 10.0.401, runtime 10.0.12, and the existing
+Metalama package versions. Production code and dependencies are unchanged.
+
+### Changes and coverage
+
+- `ConsumerProject.Build()` passes `BuildProjectReferences=false` to reuse the
+  library's current Release outputs. MSBuild documents this property in its
+  [common project properties reference](https://learn.microsoft.com/en-us/visualstudio/msbuild/common-msbuild-project-properties).
+  The solution must be restored and built in Release after library or fixture
+  changes. Child builds no longer check whether the library is up to date.
+- Canonical and lowercase culture scenarios moved to ConsumerFixture, preserving
+  two independent Resource Sets, `ES-MX` ExpectedCultures, `es-MX`/`es-mx`
+  satellite suffixes, and the distinct `Canonical`/`Lowercase` runtime outputs.
+- An xUnit collection fixture caches one build across the seven diagnostic
+  tests. Input setup stays beside each test's assertions. Indexed Placeholder
+  groups use distinct `Malformed` and `Changed` target/resource names to prevent
+  collisions. Their assertions now also require the target filename on the same
+  line as the diagnostic code, resource path, Resource Key, and message fragment.
+  Existing raw/localized diagnostic assertions are retained.
+- Malformed XML stays in its own consumer project: SDK resource generation emits
+  MSB3103 before aspects execute. The two consumer builds start together through
+  `Task.WhenAll`, limiting concurrency to exactly two isolated projects.
+- `RestoreRecursive=false` limits restore to the consumer. The installed SDK's
+  `NuGet.targets` selects only top-level restore entries for this value, while
+  still evaluating dependency metadata. Library bin/Release and obj file paths,
+  sizes, and modification timestamps were compared before/after three concurrent
+  integration runs and both final full runs; none changed.
+- Build setup is lazy and temporary projects are disposed after both processes
+  finish. Runtime-only filters do not trigger consumer builds. A diagnostic
+  filter starts both builds; the first diagnostic test includes shared setup in
+  its reported duration. Per-test timings no longer represent independent builds.
+
+Every existing test identity remains unchanged. `tests/run.ps1` therefore keeps
+its 31 fast / 47 full inventory, verified by both final full runs.
+
+### Measurements
+
+Solution restore completed successfully before the baseline. The full command
+is `pwsh -NoProfile -File tests/run.ps1 -Mode full`; the preceding build command
+is `dotnet build Talby.Core.ResxAccess.slnx --configuration Release --no-restore`.
+Stopwatch wall times include command startup and, for full, inventory validation.
+All solution builds passed with zero warnings/errors.
+
+| Stage | Temporary builds | Solution build | Full wall time | Build + full | Passed |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Original baseline | 9 | 7.60 s | 31.48 s | 39.08 s | 47/47 |
+| Reference reuse only | 9 | 2.78 s | 28.55 s | 31.33 s | 47/47 |
+| Final, run 1 | 2 | 2.16 s | 14.13 s | 16.29 s | 47/47 |
+| Final, run 2 | 2 | 2.14 s | 12.20 s | 14.34 s | 47/47 |
+
+The final full wall-time mean is 13.17 s, 58.2% below the single original
+baseline. Build + full also decreases, so the observed savings are not limited
+to moving work into ConsumerFixture. The original solution build was slower
+than subsequent builds; its difference includes warm-up/incremental effects
+and must not be attributed entirely to this refactor. These are local samples,
+not a guaranteed timing bound or a controlled benchmark.
+
+The final IntegrationTests runner reported 5.23 s and 5.01 s, versus 27.80 s
+before the change. AspectTests reported 10.75 s and 10.55 s, versus 11.21 s
+before; AspectTests now dominate the full suite. Separate integration command
+wall times were 6.03 s with grouped serial builds and consumer-only restore,
+then 4.65 s, 5.10 s, and 4.70 s with two concurrent builds. All three concurrent
+runs passed 16/16 tests.
+
+### Negative controls and limits
+
+Two temporary mutations were built and tested individually, then restored:
+
+1. Removing only the LogicalName override left the other diagnostic failures
+   present. `ReportsEachInvalidResourceAndEmbeddingInOneBuild` failed because
+   its required LogicalNameTarget diagnostic was absent.
+2. Pointing CanonicalTexts at the Lowercase Resource Set built successfully but
+   failed `CanInvokeCanonicalAndLowercaseLocalizedResourceCultures`: the output
+   became `Lowercase`/`Lowercase` instead of `Canonical`/`Lowercase`.
+
+The final Release builds and full runs occurred after restoring both mutations.
+Grouping retains individual Facts and assertions but reduces project isolation:
+an unexpected failure before aspect execution can affect all seven diagnostic
+tests. The filename/code/message assertions detect missing diagnostics even
+when the shared build fails for other reasons. The two negative controls check
+specific masking risks and do not prove equivalence for every regression.
+Concurrent execution was verified on the stated Windows/SDK environment.
+
+Final full logs and negative-control logs are under the ignored
+`.scratch/test-performance/test-results/` directory. Final TRX inventories are
+under `test-results/execution/full-bbe2f733afa542098b07a1737bf9ee8e/` and
+`test-results/execution/full-d988bc4118c3451aa9fab0aaf558d008/`.

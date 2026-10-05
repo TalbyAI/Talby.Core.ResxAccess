@@ -5,7 +5,7 @@ using Metalama.Framework.Code;
 
 namespace Talby.Core.ResxAccess;
 
-/// <summary>Validates a Resource Set and introduces Raw Text methods for its culture-neutral, SDK-embedded Reference Resource.</summary>
+/// <summary>Validates a Resource Set and introduces Raw Text and Indexed Placeholder formatting methods.</summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public sealed class GenerateResxAccessAttribute : TypeAspect
 {
@@ -51,5 +51,29 @@ public sealed class GenerateResxAccessAttribute : TypeAspect
         {
             throw new InvalidOperationException($"Satellite resources for '{resourceManager.BaseName}' could not be loaded for Resource Key '{key}' and Resource Culture '{resourceCulture.Name}'.", exception);
         }
+    }
+
+    [Template]
+    public static string FormattedText([CompileTime] IMethod rawTextMethod, [CompileTime] int[] indices, [CompileTime] int cultureCount)
+    {
+        var resourceCulture = CultureInfo.CurrentUICulture;
+        var formattingCulture = CultureInfo.CurrentCulture;
+        if (cultureCount >= 1)
+        {
+            resourceCulture = (CultureInfo)meta.Target.Parameters[indices.Length].Value!;
+        }
+        if (cultureCount == 2)
+        {
+            formattingCulture = (CultureInfo)meta.Target.Parameters[indices.Length + 1].Value!;
+            ArgumentNullException.ThrowIfNull(formattingCulture);
+        }
+
+        var text = (string)rawTextMethod.Invoke(resourceCulture)!;
+        var arguments = new object?[indices.Last() + 1];
+        foreach (var index in indices)
+        {
+            arguments[index] = meta.Target.Parameters["arg" + index].Value;
+        }
+        return string.Format(formattingCulture, text, arguments);
     }
 }

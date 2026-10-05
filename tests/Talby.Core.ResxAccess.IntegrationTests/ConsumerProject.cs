@@ -39,7 +39,10 @@ internal sealed class ConsumerProject : IDisposable
     }
 
     public async Task<(int ExitCode, string Output)> Build()
-        => await Run("build", Path.Combine(DirectoryPath, "Consumer.csproj"), "--configuration", "Release", "--nologo", "--verbosity", "quiet");
+        // The current Release solution build supplies the library and its Metalama outputs.
+        // Restore only the fresh consumer so the reference's obj directory stays read-only.
+        => await Run("build", Path.Combine(DirectoryPath, "Consumer.csproj"), "--configuration", "Release", "--nologo", "--verbosity", "quiet",
+            "-p:BuildProjectReferences=false", "-p:RestoreRecursive=false");
 
     public static async Task<(int ExitCode, string Output)> Invoke(string assemblyPath, params string[] arguments)
         => await Run([assemblyPath, .. arguments]);

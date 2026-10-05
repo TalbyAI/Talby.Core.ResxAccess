@@ -1,6 +1,13 @@
 using System.Globalization;
 using System.Resources;
 
+if (args.Length == 1 && args[0] == "culture-casing")
+{
+    Console.WriteLine(Customer.Api.CanonicalTexts.Plain(CultureInfo.GetCultureInfo("es-MX")));
+    Console.WriteLine(Customer.Api.LowercaseTexts.Plain(CultureInfo.GetCultureInfo("es-MX")));
+    return;
+}
+
 if (args.Length == 1 && args[0] == "localized")
 {
     var originalResourceCulture = CultureInfo.CurrentUICulture;

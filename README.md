@@ -1,6 +1,6 @@
 # Talby.Core.ResxAccess
 
-Metalama generates Raw Text access methods on a consumer-declared, non-generic
+Metalama generates Raw Text and Indexed Placeholder formatting methods on a consumer-declared, non-generic
 static class. A `partial` declaration is not required.
 
 ```csharp
@@ -40,7 +40,7 @@ embedding. Duplicate keys and non-text entries are rejected in both kinds of
 resource, including keys that do not receive generated methods. A Resource Set
 cannot contain multiple Localized Resources for the same Resource Culture,
 including filenames differing only in casing on a case-sensitive file system. Empty and
-whitespace-only text remains valid and is returned unchanged.
+whitespace-only text remains valid when its Placeholder Contract permits it and is returned unchanged.
 
 Localized Resource filename suffixes must use canonical Resource Culture casing
 or its lowercase form (for example, `es-MX` or `es-mx`). Other spellings such as
@@ -56,8 +56,40 @@ cultures without their own resource; they never excuse an incomplete resource
 that is present.
 
 `TRESX004` reports invalid Localized Resources; `TRESX005` reports invalid or
-missing Expected Cultures. Formatted Text, configurable identifier policies,
-and verification of incremental build and IDE refresh belong to dependent issues.
+missing Expected Cultures. Named and mixed Formatting Placeholders, configurable
+identifier policies, and verification of incremental build and IDE refresh belong
+to dependent issues.
+
+For a Reference Resource Translation such as `"{2} / {0:N2}"`, the generated API is:
+
+```csharp
+Texts.FormatSummary(arg0, arg2);
+Texts.FormatSummary(arg0, arg2, resourceCulture);
+Texts.FormatSummary(arg0, arg2, resourceCulture, formattingCulture);
+```
+
+The Resource Key in this example is `Summary`. Only Indexed Placeholder identities
+actually used in the Reference Resource become parameters, in numeric order;
+`arg0` and `arg2` are required `object?` arguments. Formatting Culture defaults to
+`CurrentCulture` independently of Resource Culture, even when Resource Culture is
+explicit. Explicit cultures must be non-null. There is no formatting-culture-only
+overload. Keys without Formatting Placeholders retain only Raw Text methods.
+
+Each formatting call allocates an argument array with one slot per index from
+zero through the highest Indexed Placeholder identity, including unused gaps.
+For example, `{999999}` requires 1,000,000 slots (about 8 MB on a 64-bit runtime)
+even though the generated method accepts only `arg999999`. Prefer small indices
+to keep runtime allocations small. Compile-time syntax validation uses one null
+argument regardless of index gaps; that saving applies only during compilation.
+
+Every Translation must use exactly the Reference Resource's Indexed Placeholder
+identities, including entries omitted because their Resource Keys are invalid
+identifiers. Translations may reorder or repeat identities and change alignment or
+Argument Formats. Standard composite formatting supports null arguments, alignment,
+formats, and escaped braces (`{{` and `}}`); standard formatting failures propagate.
+Malformed syntax receives `TRESX001` in a Reference Resource or `TRESX004` in a
+Localized Resource. Raw Text remains unchanged. Named and mixed placeholders retain
+Raw Text access while their formatting and contract validation await ticket 04.
 
 ## Consumer build integration
 
@@ -91,11 +123,26 @@ dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-r
 The solution contains three test projects:
 
 - `Talby.Core.ResxAccess.UnitTests`: 19 tests of Metalama setup and shared Reference Resource validation.
-- `Talby.Core.ResxAccess.IntegrationTests`: ten SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
-- `Talby.Core.ResxAccess.AspectTests`: ten dedicated Metalama snapshot tests.
+- `Talby.Core.ResxAccess.IntegrationTests`: 16 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
+- `Talby.Core.ResxAccess.AspectTests`: 8 dedicated Metalama snapshot tests.
 
-The integration test classes share an xUnit collection so their temporary SDK
-consumer builds cannot concurrently overwrite the referenced library's outputs.
+The [testing criterion](docs/agents/testing.md) defines test placement,
+compatible diagnostic grouping, assertion preservation, negative controls and
+performance measurements. `ResourceValidationDiagnostics` groups 24 named
+diagnostic cases into five labeled behavior groups with one shared compilation.
+The generation and DesignTime snapshots remain separate. This reduces compiler
+invocations while retaining every diagnostic expectation; filtering and failure
+reporting now operate on the grouped snapshot.
+
+The integration test classes share an xUnit collection fixture that caches one
+build for seven compatible diagnostic tests. Malformed XML uses a separate
+consumer project because SDK resource generation fails before aspects execute.
+The fixture starts these two builds concurrently, with isolated consumer bin/obj
+directories. `ConsumerProject.Build()` sets `BuildProjectReferences=false` and
+`RestoreRecursive=false`: it reuses the library's Release outputs and restores
+only the fresh consumer. A current Release solution restore/build is required,
+including after library or fixture changes; child builds do not check whether
+the referenced library is up to date.
 
 Run either ordinary test project independently after the solution build:
 
@@ -131,15 +178,17 @@ project with four `RawTextConsumerTests`:
 `CanInvokeCanonicalAndLowercaseLocalizedResourceCultures`,
 `RejectsInconsistentLocalizedResourcesOutsideExpectedCultures`,
 `ReportsMissingAndInvalidExpectedCultures`, and
-`RejectsLocalizedResourcesWithoutStandardSatelliteEmbedding`. Its output names the deferred
+`RejectsLocalizedResourcesWithoutStandardSatelliteEmbedding`, plus six `IndexedPlaceholderConsumerTests`
+covering generated signatures, independent cultures, composite formatting, runtime
+failures, malformed syntax, and Localized Resource Placeholder Contracts. Its output names the deferred
 tests. Fast success does not verify generation or runtime lookup end to end.
 Full applies no filter; the standard solution-level `dotnet test` command above
 also continues to select every test.
 
 Each entry point propagates test failures and checks the passed TRX identities
-against the fixed inventory (29 fast, 39 full), rejecting
-empty, skipped, missing, duplicate, or unexpected selections. Adding or renaming
-tests requires reviewing and updating that inventory in `tests/run.ps1`.
+against the fixed inventory (27 fast, 43 full), rejecting
+empty, skipped, missing, duplicate, or unexpected selections. Adding, grouping,
+or renaming tests requires reviewing and updating that inventory in `tests/run.ps1`.
 Unique TRX directories under ignored `test-results/execution/` prevent stale
 results from satisfying the check.
 
@@ -157,9 +206,9 @@ exit $LASTEXITCODE
 No CI provider is configured, so this requirement is documented rather than
 automatically enforced. The [experiment report](.scratch/test-policy/results/01-execution.md)
 contains measurements, selection checks, and the unchanged assertion inventory.
-Experiment 01 was merged in PR #1. The project split retains its optional local
-fast route and complete verification gate; it does not establish a permanent
-test classification policy or demonstrate a performance improvement. The
+Experiment 01 was merged in PR #1. The project split retained its optional local
+fast route and complete verification gate; that historical experiment did not
+establish a permanent test classification policy or demonstrate a performance improvement. The
 [project split report](.scratch/test-policy/results/04-project-split.md) maps
 test identities and assertions and records verification.
 
@@ -175,16 +224,27 @@ keeps `MetalamaRemoveCompileTimeOnlyCode=false`.
 solution. Metalama processes its aspects; ordinary tests still keep
 `MetalamaEnabled=false`. IntegrationTests references the fixture so its assembly,
 runtime configuration, and satellite assemblies are copied to the test output.
-Runtime tests invoke that output in three fresh processes, retaining culture and
+Runtime tests invoke that output in fresh processes, retaining culture and
 process isolation without rebuilding a consumer for each scenario.
 
 Positive Resource Sets keep real SDK embedding. A fixture-only target removes
 the missing-manifest Resource Set and replaces only the missing-Resource-Key
-Resource Set. The grouped invalid-consumer and malformed XML tests still create
-isolated temporary SDK projects and build from a different working directory.
-Full execution now starts two temporary SDK builds instead of five, preserving
-every test identity and assertion. Malformed XML is diagnosed by SDK resource
-generation before the aspect executes (`MSB3103`).
+Resource Set. Canonical and lowercase Localized Resource cultures use two
+independent fixture Resource Sets, with `es-MX` and `es-mx` satellite suffixes
+and uppercase `ExpectedCultures`. Their runtime test invokes the `culture-casing`
+scenario and requires distinct Translations from both Resource Sets.
+
+Diagnostic tests still create isolated temporary SDK projects and build from a
+different working directory. Full execution starts two temporary SDK builds
+instead of nine: seven compatible diagnostic tests share one compilation and
+the malformed XML test uses another. That integration refactor preserved every
+test identity. The later diagnostic snapshot consolidation sets the current
+inventory to 27 fast / 43 full. Grouped assertions
+require the target source file, diagnostic code, and expected message on the
+same output line. Malformed XML is diagnosed by SDK resource generation before
+the aspect executes (`MSB3103`). The shared builds start lazily: runtime-only
+filtered runs do not compile temporary consumers. Filtering any diagnostic test
+starts both builds, and its test duration includes their shared setup cost.
 
 Rebuild the solution after changing fixture source or `.resx` files before using
 `--no-build`. A successful fixture build alone does not execute its runtime
@@ -207,9 +267,10 @@ All original consumer assertions remain in full. Fast checks shared validation
 and generated templates, but cannot establish SDK wiring, embedding, associated
 manifest naming, or runtime lookup. The [shared-logic report](.scratch/test-policy/results/03-aspect-logic.md)
 records adapter limitations, assertion mapping, negative controls, and paired
-timings. Its historical evidence does not establish a permanent test
-classification policy. No custom snapshot runner or public testing API is
-required.
+timings. The current [testing criterion](docs/agents/testing.md) was approved
+separately from those historical experiments. No custom snapshot runner or
+public testing API is required. The [snapshot consolidation report](.scratch/aspect-test-performance/results/consolidation.md)
+records the retained assertions, negative controls and baseline/candidate timings.
 
 Relevant upstream documentation: [SDK resource manifest names](https://learn.microsoft.com/en-us/dotnet/core/resources/manifest-file-names)
 and [Metalama aspect testing](https://doc.metalama.net/conceptual/aspects/testing/aspect-testing).
