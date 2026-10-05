@@ -45,6 +45,14 @@ $integration += @(
     'OmittedKeysStillReportResourceSetAndPlaceholderContractErrorsInBothPolicies'
     'RejectsUnsupportedIdentifierPolicies'
 ) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.ResourceKeyIdentifierConsumerTests.$_" }
+$integration += @(
+    'RefreshesRawAndFormattedTextAfterReferenceAndLocalizedEdits'
+    'RefreshesDiscoveryValidationAndFallbackAfterResourceAdditionsAndRemovals'
+    'RefreshesExpectedCultureDiagnosticsAfterRemovalAndRestoration'
+    'DetectsAssociatedResourcesExcludedFromSdkEmbedding'
+    'RefreshesGeneratedKeysSignaturesAndPlaceholderDiagnostics'
+    'RefreshesValidationForOmittedKeysWhileIgnoringUnrelatedResources'
+) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.IncrementalBuildConsumerTests.$_" }
 $fast = @(
     'Talby.Core.ResxAccess.UnitTests.MetalamaSetupTests.CanCreateAndQueryCompilation'
     'InvalidPaths'
