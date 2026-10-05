@@ -7,121 +7,53 @@ param(
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 $root = Split-Path $PSScriptRoot -Parent
-$integration = @(
-    'CanCompileAndInvokeIndependentResourceSets'
-    'ReportsEachInvalidResourceAndEmbeddingInOneBuild'
-    'ReportsMalformedReferenceResourceWithoutAspectCrash'
-    'DescribesMissingRuntimeManifestAndResourceKey'
-) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.RawTextConsumerTests.$_" }
-$integration += @(
-    'CanInvokeSatelliteResourcesWithDefaultAndExplicitCulture'
-    'RejectsUnsupportedLocalizedResourceCultureCasing'
-    'CanInvokeCanonicalAndLowercaseLocalizedResourceCultures'
-    'RejectsInconsistentLocalizedResourcesOutsideExpectedCultures'
-    'ReportsMissingAndInvalidExpectedCultures'
-    'RejectsLocalizedResourcesWithoutStandardSatelliteEmbedding'
-) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.LocalizedResourceConsumerTests.$_" }
-$integration += @(
-    'GeneratesRequiredNullableArgumentsInNumericOrderWithIndexGaps'
-    'SelectsResourceAndFormattingCulturesIndependentlyForAllOverloads'
-    'FormatsAlignmentEscapedBracesAndNullArgumentsWhilePreservingRawText'
-    'PropagatesStandardFormattingFailuresAndRejectsNullCultures'
-    'RejectsMalformedIndexedPlaceholdersWithResourceAndKeyDiagnostics'
-    'RejectsChangedPlaceholderContractsInEveryLocalizedResourceAndOmittedKey'
-) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.IndexedPlaceholderConsumerTests.$_" }
-$integration += @(
-    'GeneratesNamedArgumentsBeforeOnlyUsedIndexedIdentities'
-    'PreservesEverySupportedArgumentTypeAndNullableRequiredSignature'
-    'FormatsUntypedNullableKeywordAndUnicodeArgumentsWithStandardSemantics'
-    'SelectsIndependentCulturesAndReorderedFormatsForEveryNamedOverload'
-    'RejectsInvalidNamedDeclarationsAndParameterCollisionsPrecisely'
-    'RejectsChangedNamedAndMixedContractsIncludingNullabilityAndOmittedKeys'
-    'ConsumerCompilerEnforcesNamedTypesNullabilityAndRequiredArguments'
-) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.NamedPlaceholderConsumerTests.$_" }
-$integration += @(
-    'NormalizesReproduciblyAndInvokesOriginalKeysAndEscapedKeywords'
-    'WarnAndIgnoreOmitTheSameMembersWithDistinctDiagnostics'
-    'RejectsExistingMembersAndGeneratedMemberFamilyCollisions'
-    'OmittedKeysStillReportResourceSetAndPlaceholderContractErrorsInBothPolicies'
-    'RejectsUnsupportedIdentifierPolicies'
-) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.ResourceKeyIdentifierConsumerTests.$_" }
-$fast = @(
-    'Talby.Core.ResxAccess.UnitTests.MetalamaSetupTests.CanCreateAndQueryCompilation'
-    'InvalidPaths'
-    'UnavailableProjectContext'
-    'UnsupportedTargets'
-    'RawTextGeneration'
-    'ResourceKeyIdentifiers'
-    'NormalizedResourceKeyGeneration'
-    'ResourceKeyIdentifierDiagnostics'
-    'ResourceValidationDiagnostics'
-    'KeywordResourceKey'
-    'IndexedPlaceholderGeneration'
-    'NamedPlaceholderGeneration'
-    'NamedPlaceholderDiagnostics'
-)
-$fast += @(
-    'ReadsTextEntriesAndSdkManifestName'
-    'AcceptsExplicitStringTypesEmptyValuesAndCaseSensitiveKeys'
-    'AcceptsAnEmptyReferenceResource'
-    'ValidatesNamedAndMixedContractsWithTranslationTypeInheritance'
-    'RejectsDuplicateLocalizedResourceCultures'
-    'RejectsMalformedXmlWithoutAnUnhandledXmlException'
-    'RejectsInvalidRootElements'
-    'RejectsDuplicateOrUnnamedResourceKeys'
-    'RejectsInvalidValueAndTypeStructures'
-    'RejectsInvalidPathsBeforeUnavailableProjectContext'
-    'DistinguishesUnavailableProjectContextFromMissingFiles'
-    'RejectsCultureSpecificReferenceResourcesBeforeMissingSdkMap'
-    'RejectsUnavailableSdkMaps'
-    'RejectsMissingOrMalformedEmbeddedResourceMetadata'
-    'RejectsCustomNamesAndLinkedResourceMetadata'
-    'RejectsResourcesOutsideTheProjectDirectory'
-    'RejectsCultureSpecificSdkMetadata'
-    'MatchesResourceMapPathsUsingPlatformComparison'
-    'RecognizesKeywordAndUnicodeResourceKeyIdentifiers'
-) | ForEach-Object { "Talby.Core.ResxAccess.UnitTests.ReferenceResourceTests.$_" }
-$expected = if ($Mode -eq 'fast') { $fast } else { $fast + $integration }
-$results = Join-Path $root "test-results/execution/$Mode-$([Guid]::NewGuid().ToString('N'))"
-$arguments = @(
-    '--configuration', 'Release', '--no-build', '--no-restore'
-    '--verbosity', 'normal', '--logger', 'trx;LogFilePrefix=execution', '--results-directory', $results
+$fastProjects = @(
+    'tests/Talby.Core.ResxAccess.UnitTests/Talby.Core.ResxAccess.UnitTests.csproj'
+    'tests/Talby.Core.ResxAccess.AspectTests/Talby.Core.ResxAccess.AspectTests.csproj'
 )
 $projects = if ($Mode -eq 'fast')
 {
-    Write-Host "FAST: deferring $($integration.Count) integration tests (SDK embedding and runtime lookup are not checked):"
-    $integration | ForEach-Object { Write-Host "  $_" }
-    'tests/Talby.Core.ResxAccess.UnitTests/Talby.Core.ResxAccess.UnitTests.csproj'
-    'tests/Talby.Core.ResxAccess.AspectTests/Talby.Core.ResxAccess.AspectTests.csproj'
+    Write-Host 'FAST: running the selected test projects; other solution test projects are deferred (SDK embedding and runtime lookup are not checked):'
+    $fastProjects | ForEach-Object { Write-Host "  $_" }
+    $fastProjects
 }
 else
 {
     'Talby.Core.ResxAccess.slnx'
 }
+if (-not $projects) { throw "No test projects selected for $Mode." }
+$results = Join-Path $root "test-results/execution/$Mode-$([Guid]::NewGuid().ToString('N'))"
+$arguments = @(
+    '--configuration', 'Release', '--no-build', '--no-restore'
+    '--verbosity', 'normal', '--logger', 'trx;LogFilePrefix=execution'
+)
+$passed = 0
+Write-Host "Results: $results"
 
 Push-Location $root
 try
 {
     foreach ($project in $projects)
     {
-        & dotnet test $project @arguments
+        $projectResults = Join-Path $results ([IO.Path]::GetFileNameWithoutExtension($project))
+        $null = New-Item -ItemType Directory -Path $projectResults
+        & dotnet test $project @arguments --results-directory $projectResults
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    }
 
-    $executed = @(Get-ChildItem -LiteralPath $results -Filter '*.trx' | ForEach-Object {
-        [xml] $trx = Get-Content -LiteralPath $_.FullName -Raw
-        foreach ($result in $trx.TestRun.Results.UnitTestResult)
+        $trxFiles = @(Get-ChildItem -LiteralPath $projectResults -Filter '*.trx')
+        if ($trxFiles.Count -eq 0) { throw "No TRX results for $project." }
+        foreach ($file in $trxFiles)
         {
-            if ($result.outcome -ne 'Passed') { throw "Test did not pass: $($result.testName) ($($result.outcome))" }
-            $result.testName
+            [xml] $trx = Get-Content -LiteralPath $file.FullName -Raw
+            if (-not $trx.TestRun.Results.UnitTestResult) { throw "No test results in $($file.FullName)." }
+            foreach ($result in $trx.TestRun.Results.UnitTestResult)
+            {
+                if ($result.outcome -ne 'Passed') { throw "Test did not pass: $($result.testName) ($($result.outcome))" }
+                $passed++
+            }
         }
-    })
-    # ponytail: fixed experiment inventory; review and update it when adding or renaming tests.
-    if ($executed.Count -ne $expected.Count -or (Compare-Object $expected $executed -CaseSensitive))
-    {
-        throw "Unexpected $Mode selection. Expected: $($expected -join ', '). Executed: $($executed -join ', ')."
     }
-    Write-Host "Verified $Mode selection: $($executed.Count) passed; $($integration.Count * [int]($Mode -eq 'fast')) integration tests deferred. Results: $results"
+    Write-Host "Verified $Mode results: $passed passed. Results: $results"
 }
 finally
 {

@@ -1,6 +1,12 @@
 <Project>
   <ItemGroup>
     <CompilerVisibleProperty Include="TalbyResxResourceMap" />
+    <!-- Discovery also validates associated resources removed from EmbeddedResource. -->
+    <_TalbyResxInputs
+      Include="**/*.resx"
+      Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)"
+    />
+    <AdditionalFiles Include="@(_TalbyResxInputs)" />
   </ItemGroup>
 
   <!-- Capture user metadata before the SDK supplies convention-based names. -->
@@ -21,13 +27,16 @@
     <PropertyGroup>
       <TalbyResxResourceMap>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)TalbyResxResources.txt', '$(MSBuildProjectDirectory)'))</TalbyResxResourceMap>
     </PropertyGroup>
+    <!-- Standalone paths record discovery membership; the reader consumes six-field SDK rows. -->
     <WriteLinesToFile
       File="$(TalbyResxResourceMap)"
-      Lines="@(EmbeddedResource->'%(FullPath)|%(ManifestResourceName)|%(TalbyLogicalName)|%(TalbyManifestResourceName)|%(Link)|%(WithCulture)')"
+      Lines="@(EmbeddedResource->'%(FullPath)|%(ManifestResourceName)|%(TalbyLogicalName)|%(TalbyManifestResourceName)|%(Link)|%(WithCulture)');@(_TalbyResxInputs->'%(FullPath)')"
       Overwrite="true"
       WriteOnlyWhenDifferent="true"
     />
     <ItemGroup>
+      <!-- The stable map changes for additions/removals, including non-embedded resources. -->
+      <AdditionalFiles Include="$(TalbyResxResourceMap)" />
       <FileWrites Include="$(TalbyResxResourceMap)" />
     </ItemGroup>
   </Target>

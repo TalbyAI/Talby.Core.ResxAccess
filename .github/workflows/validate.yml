@@ -49,7 +49,7 @@ jobs:
       - name: Build Release
         run: dotnet build Talby.Core.ResxAccess.slnx --configuration Release --no-restore
 
-      - name: Run every test and verify the inventory
+      - name: Run every test and validate results
         shell: pwsh
         run: ./tests/run.ps1 -Mode full
 
