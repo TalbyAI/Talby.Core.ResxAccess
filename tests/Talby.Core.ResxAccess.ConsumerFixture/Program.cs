@@ -95,9 +95,24 @@ try
             | System.Reflection.BindingFlags.Static
             | System.Reflection.BindingFlags.DeclaredOnly
     );
-    if (methods.Length != 4 || methods.Any(m => m.Name.StartsWith("Format")))
+    if (
+        methods.Length != 7
+        || methods.Count(m => m.Name == "FormatWelcome") != 3
+        || methods.Any(m => m.Name == "FormatPlain")
+    )
     {
         throw new Exception("Unexpected API.");
+    }
+    if (
+        Customer.Api.Texts.FormatWelcome(
+            "Ada",
+            12.5m,
+            CultureInfo.InvariantCulture,
+            CultureInfo.InvariantCulture
+        ) != "  Hello Ada, 12.50!  "
+    )
+    {
+        throw new Exception("Mixed Formatted Text changed.");
     }
 
     CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");

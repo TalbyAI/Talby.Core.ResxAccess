@@ -29,6 +29,15 @@ $integration += @(
     'RejectsMalformedIndexedPlaceholdersWithResourceAndKeyDiagnostics'
     'RejectsChangedPlaceholderContractsInEveryLocalizedResourceAndOmittedKey'
 ) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.IndexedPlaceholderConsumerTests.$_" }
+$integration += @(
+    'GeneratesNamedArgumentsBeforeOnlyUsedIndexedIdentities'
+    'PreservesEverySupportedArgumentTypeAndNullableRequiredSignature'
+    'FormatsUntypedNullableKeywordAndUnicodeArgumentsWithStandardSemantics'
+    'SelectsIndependentCulturesAndReorderedFormatsForEveryNamedOverload'
+    'RejectsInvalidNamedDeclarationsAndParameterCollisionsPrecisely'
+    'RejectsChangedNamedAndMixedContractsIncludingNullabilityAndOmittedKeys'
+    'ConsumerCompilerEnforcesNamedTypesNullabilityAndRequiredArguments'
+) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.NamedPlaceholderConsumerTests.$_" }
 $fast = @(
     'Talby.Core.ResxAccess.UnitTests.MetalamaSetupTests.CanCreateAndQueryCompilation'
     'InvalidPaths'
@@ -39,11 +48,14 @@ $fast = @(
     'ResourceValidationDiagnostics'
     'KeywordResourceKey'
     'IndexedPlaceholderGeneration'
+    'NamedPlaceholderGeneration'
+    'NamedPlaceholderDiagnostics'
 )
 $fast += @(
     'ReadsTextEntriesAndSdkManifestName'
     'AcceptsExplicitStringTypesEmptyValuesAndCaseSensitiveKeys'
     'AcceptsAnEmptyReferenceResource'
+    'ValidatesNamedAndMixedContractsWithTranslationTypeInheritance'
     'RejectsDuplicateLocalizedResourceCultures'
     'RejectsMalformedXmlWithoutAnUnhandledXmlException'
     'RejectsInvalidRootElements'

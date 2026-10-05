@@ -5,7 +5,7 @@ using Metalama.Framework.Code;
 
 namespace Talby.Core.ResxAccess;
 
-/// <summary>Validates a Resource Set and introduces Raw Text and Indexed Placeholder formatting methods.</summary>
+/// <summary>Validates a Resource Set and introduces Raw Text and formatting methods.</summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public sealed class GenerateResxAccessAttribute : TypeAspect
 {
@@ -77,7 +77,8 @@ public sealed class GenerateResxAccessAttribute : TypeAspect
     [Template]
     public static string FormattedText(
         [CompileTime] IMethod rawTextMethod,
-        [CompileTime] int[] indices,
+        [CompileTime] string[] parameterNames,
+        [CompileTime] Dictionary<string, string> formats,
         [CompileTime] int cultureCount
     )
     {
@@ -85,19 +86,27 @@ public sealed class GenerateResxAccessAttribute : TypeAspect
         var formattingCulture = CultureInfo.CurrentCulture;
         if (cultureCount >= 1)
         {
-            resourceCulture = (CultureInfo)meta.Target.Parameters[indices.Length].Value!;
+            resourceCulture = (CultureInfo)meta.Target.Parameters[parameterNames.Length].Value!;
         }
         if (cultureCount == 2)
         {
-            formattingCulture = (CultureInfo)meta.Target.Parameters[indices.Length + 1].Value!;
+            formattingCulture = (CultureInfo)
+                meta.Target.Parameters[parameterNames.Length + 1].Value!;
             ArgumentNullException.ThrowIfNull(formattingCulture);
         }
 
         var text = (string)rawTextMethod.Invoke(resourceCulture)!;
-        var arguments = new object?[indices.Last() + 1];
-        foreach (var index in indices)
+        var arguments = new object?[parameterNames.Length];
+        foreach (var index in meta.CompileTime(Enumerable.Range(0, parameterNames.Length)))
         {
-            arguments[index] = meta.Target.Parameters["arg" + index].Value;
+            arguments[index] = meta.Target.Parameters[parameterNames[index]].Value;
+        }
+        foreach (var format in formats)
+        {
+            if (text == format.Key)
+            {
+                return string.Format(formattingCulture, format.Value, arguments);
+            }
         }
         return string.Format(formattingCulture, text, arguments);
     }

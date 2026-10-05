@@ -12,7 +12,7 @@ internal static class ReferenceResourceReader
     public static (
         string ManifestBaseName,
         HashSet<string> Keys,
-        Dictionary<string, int[]> IndexedArguments
+        Dictionary<string, PlaceholderContract> PlaceholderContracts
     ) Read(
         string referenceResource,
         string? projectPath,
@@ -41,7 +41,7 @@ internal static class ReferenceResourceReader
     private static (
         string ManifestBaseName,
         HashSet<string> Keys,
-        Dictionary<string, int[]> IndexedArguments
+        Dictionary<string, PlaceholderContract> PlaceholderContracts
     ) ReadCore(
         string referenceResource,
         string? projectPath,
@@ -151,18 +151,13 @@ internal static class ReferenceResourceReader
 
         var entries = ReadEntries(resourcePath, referenceResource);
         var keys = new HashSet<string>(entries.Keys, StringComparer.Ordinal);
-        var indexedArguments = new Dictionary<string, int[]>(StringComparer.Ordinal);
+        var placeholderContracts = new Dictionary<string, PlaceholderContract>(
+            StringComparer.Ordinal
+        );
         foreach (var entry in entries)
         {
-            var arguments = IndexedPlaceholderContract.Read(
-                entry.Value,
-                referenceResource,
-                entry.Key
-            );
-            if (arguments is not null)
-            {
-                indexedArguments.Add(entry.Key, arguments);
-            }
+            var arguments = PlaceholderContract.Read(entry.Value, referenceResource, entry.Key);
+            placeholderContracts.Add(entry.Key, arguments);
         }
         var cultureNames = CultureInfo
             .GetCultures(CultureTypes.AllCultures)
@@ -248,23 +243,16 @@ internal static class ReferenceResourceReader
 
                 foreach (var entry in localizedEntries)
                 {
-                    var arguments = IndexedPlaceholderContract.Read(
+                    var referenceContract = placeholderContracts[entry.Key];
+                    var localizedContract = PlaceholderContract.Read(
                         entry.Value,
                         localizedResource,
-                        entry.Key
+                        entry.Key,
+                        referenceContract
                     );
-                    if (
-                        indexedArguments.TryGetValue(entry.Key, out var referenceArguments)
-                        && (arguments is null || !referenceArguments.SequenceEqual(arguments))
-                    )
+                    foreach (var format in localizedContract.Formats)
                     {
-                        var identities =
-                            referenceArguments.Length == 0
-                                ? "(none)"
-                                : string.Join(", ", referenceArguments);
-                        throw new ResourceValidationException(
-                            $"'{localizedResource}' Resource Key '{entry.Key}' must use exactly the Reference Resource's Placeholder Contract (Indexed Placeholders: {identities})."
-                        );
+                        referenceContract.Formats[format.Key] = format.Value;
                     }
                 }
 
@@ -319,7 +307,7 @@ internal static class ReferenceResourceReader
             }
         }
 
-        return (metadata[1], keys, indexedArguments);
+        return (metadata[1], keys, placeholderContracts);
     }
 
     private static string DescribeKeys(IEnumerable<string> keys)

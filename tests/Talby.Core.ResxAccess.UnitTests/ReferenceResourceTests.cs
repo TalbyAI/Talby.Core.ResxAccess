@@ -41,6 +41,49 @@ public class ReferenceResourceTests
     }
 
     [Fact]
+    public void ValidatesNamedAndMixedContractsWithTranslationTypeInheritance()
+    {
+        using var resource = new ResourceInput(
+            "<root><data name=\"Summary\"><value>{amount@decimal?} {2} {name@string} {0} {name}</value></data></root>"
+        );
+        var localizedPath = Path.Combine(
+            Path.GetDirectoryName(resource.ResourcePath)!,
+            "Labels.es.resx"
+        );
+        File.AppendAllText(
+            resource.MapPath,
+            $"\n{localizedPath}|ConsumerRoot.Resources.Labels.es||||true"
+        );
+        File.WriteAllText(
+            localizedPath,
+            "<root><data name=\"Summary\"><value>{0} {name} {amount:N1} {2} {name@string}</value></data></root>"
+        );
+        Assert.Equal(new[] { "Summary" }, resource.Read().Keys);
+
+        File.WriteAllText(
+            localizedPath,
+            "<root><data name=\"Summary\"><value>{0} {name} {amount@decimal:N1} {2}</value></data></root>"
+        );
+        var changedType = Assert.Throws<ResourceValidationException>(() => resource.Read());
+        Assert.True(changedType.LocalizedResource);
+        Assert.Equal(
+            "'Resources/Labels.es.resx' Resource Key 'Summary' has a malformed Formatting Placeholder: Named Placeholder 'amount' declares Argument Type 'decimal'; the Reference Resource requires 'decimal?'.",
+            changedType.Message
+        );
+
+        File.WriteAllText(
+            localizedPath,
+            "<root><data name=\"Summary\"><value>{0} {name} {2}</value></data></root>"
+        );
+        var missingNullable = Assert.Throws<ResourceValidationException>(() => resource.Read());
+        Assert.True(missingNullable.LocalizedResource);
+        Assert.Equal(
+            "'Resources/Labels.es.resx' Resource Key 'Summary' must use exactly the Reference Resource's Placeholder Contract (arguments: amount, name, 0, 2).",
+            missingNullable.Message
+        );
+    }
+
+    [Fact]
     public void RejectsDuplicateLocalizedResourceCultures()
     {
         foreach (var duplicateName in new[] { "Labels.es-MX.RESX", "Labels.es-mx.resx" })
