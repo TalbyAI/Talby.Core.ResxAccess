@@ -1,6 +1,6 @@
 # Talby.Core.ResxAccess
 
-Metalama generates Raw Text and Indexed Placeholder formatting methods on a consumer-declared, non-generic
+Metalama generates Raw Text and formatting methods on a consumer-declared, non-generic
 static class. A `partial` declaration is not required.
 
 ```csharp
@@ -56,8 +56,8 @@ cultures without their own resource; they never excuse an incomplete resource
 that is present.
 
 `TRESX004` reports invalid Localized Resources; `TRESX005` reports invalid or
-missing Expected Cultures. Named and mixed Formatting Placeholders, configurable
-identifier policies, and verification of incremental build and IDE refresh belong
+missing Expected Cultures. Configurable Resource Key identifier policies and
+verification of incremental build and IDE refresh belong
 to dependent issues.
 
 For a Reference Resource Translation such as `"{2} / {0:N2}"`, the generated API is:
@@ -75,21 +75,39 @@ actually used in the Reference Resource become parameters, in numeric order;
 explicit. Explicit cultures must be non-null. There is no formatting-culture-only
 overload. Keys without Formatting Placeholders retain only Raw Text methods.
 
-Each formatting call allocates an argument array with one slot per index from
-zero through the highest Indexed Placeholder identity, including unused gaps.
-For example, `{999999}` requires 1,000,000 slots (about 8 MB on a 64-bit runtime)
-even though the generated method accepts only `arg999999`. Prefer small indices
-to keep runtime allocations small. Compile-time syntax validation uses one null
-argument regardless of index gaps; that saving applies only during compilation.
+Named Placeholders use `{name[@type][,alignment][:format]}`. Supported explicit
+Argument Types are `string`, `bool`, `int`, `long`, `double`, `decimal`, `DateTime`,
+`DateTimeOffset`, and `Guid`, each with an optional nullable `?` suffix. Untyped
+Named Placeholders use `object?`. Explicit `string` and `string?` retain different
+compiler annotations; non-nullable reference arguments add no runtime null checks.
+Nullable arguments remain required parameters and required placeholder identities.
 
-Every Translation must use exactly the Reference Resource's Indexed Placeholder
+For `{name@string} {2} {0}`, `FormatSummary` accepts `string name`, `object? arg0`,
+and `object? arg2`, followed by the same optional culture overloads shown above.
+Distinct Named parameters appear first in order of first appearance in the
+Reference Resource; Indexed parameters follow in numeric order. Repeated
+occurrences share one parameter. An explicit declaration supplies the Argument
+Type even when another occurrence omits it; conflicting explicit declarations
+are errors. Prefer one placeholder style per Resource Key for readability;
+mixed styles are supported.
+
+Named argument identifiers must be valid C# identifiers. Keywords are escaped in
+generated C# without changing their identities. Collisions with other parameters,
+including Indexed parameter names, `resourceCulture`, and `formattingCulture`,
+are compilation errors; arguments are never silently renamed.
+
+Validated Translations are converted to composite formats at compile time.
+Each formatting call allocates one argument-array slot per public argument;
+Indexed identity gaps do not allocate additional slots.
+
+Every Translation must use exactly the Reference Resource's Named and Indexed
 identities, including entries omitted because their Resource Keys are invalid
 identifiers. Translations may reorder or repeat identities and change alignment or
-Argument Formats. Standard composite formatting supports null arguments, alignment,
+Argument Formats. Translations may omit type declarations; any explicit declaration
+must match the Reference Resource's Argument Type and nullability. Standard composite formatting supports null arguments, alignment,
 formats, and escaped braces (`{{` and `}}`); standard formatting failures propagate.
 Malformed syntax receives `TRESX001` in a Reference Resource or `TRESX004` in a
-Localized Resource. Raw Text remains unchanged. Named and mixed placeholders retain
-Raw Text access while their formatting and contract validation await ticket 04.
+Localized Resource. Raw Text remains unchanged.
 
 ## Consumer build integration
 
@@ -177,9 +195,9 @@ dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-r
 
 The solution contains three test projects:
 
-- `Talby.Core.ResxAccess.UnitTests`: 19 tests of Metalama setup and shared Reference Resource validation.
-- `Talby.Core.ResxAccess.IntegrationTests`: 16 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
-- `Talby.Core.ResxAccess.AspectTests`: 8 dedicated Metalama snapshot tests.
+- `Talby.Core.ResxAccess.UnitTests`: 20 tests of Metalama setup and shared Reference Resource validation.
+- `Talby.Core.ResxAccess.IntegrationTests`: 23 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
+- `Talby.Core.ResxAccess.AspectTests`: 10 dedicated Metalama snapshot tests.
 
 The [testing criterion](docs/agents/testing.md) defines test placement,
 compatible diagnostic grouping, assertion preservation, negative controls and
@@ -187,10 +205,12 @@ performance measurements. `ResourceValidationDiagnostics` groups 24 named
 diagnostic cases into five labeled behavior groups with one shared compilation.
 The generation and DesignTime snapshots remain separate. This reduces compiler
 invocations while retaining every diagnostic expectation; filtering and failure
-reporting now operate on the grouped snapshot.
+reporting now operate on the grouped snapshot. `NamedPlaceholderDiagnostics`
+adds 20 targets in Reference and Localized Resource behavior groups; its
+generation snapshot checks all supported Argument Types and mixed ordering.
 
 The integration test classes share an xUnit collection fixture that caches one
-build for seven compatible diagnostic tests. Malformed XML uses a separate
+build for nine compatible diagnostic tests. Malformed XML uses a separate
 consumer project because SDK resource generation fails before aspects execute.
 The fixture starts these two builds concurrently, with isolated consumer bin/obj
 directories. `ConsumerProject.Build()` sets `BuildProjectReferences=false` and
@@ -235,13 +255,16 @@ project with four `RawTextConsumerTests`:
 `ReportsMissingAndInvalidExpectedCultures`, and
 `RejectsLocalizedResourcesWithoutStandardSatelliteEmbedding`, plus six `IndexedPlaceholderConsumerTests`
 covering generated signatures, independent cultures, composite formatting, runtime
-failures, malformed syntax, and Localized Resource Placeholder Contracts. Its output names the deferred
+failures, malformed syntax, and Localized Resource Placeholder Contracts, plus seven
+`NamedPlaceholderConsumerTests` covering all supported Argument Types/nullability,
+Named and mixed parameter order, formats, cultures, precise diagnostics, and
+compiler enforcement. Its output names the deferred
 tests. Fast success does not verify generation or runtime lookup end to end.
 Full applies no filter; the standard solution-level `dotnet test` command above
 also continues to select every test.
 
 Each entry point propagates test failures and checks the passed TRX identities
-against the fixed inventory (27 fast, 43 full), rejecting
+against the fixed inventory (30 fast, 53 full), rejecting
 empty, skipped, missing, duplicate, or unexpected selections. Adding, grouping,
 or renaming tests requires reviewing and updating that inventory in `tests/run.ps1`.
 Unique TRX directories under ignored `test-results/execution/` prevent stale
@@ -262,7 +285,7 @@ The [GitHub Actions workflow](.github/workflows/validate.yml) runs on pull
 requests, pushes to `main` and manual dispatch. It sets up the SDK from
 `global.json` and Node.js 24, restores .NET tools, runs `npm ci`, checks formatting,
 restores the solution, builds Release and runs `tests/run.ps1 -Mode full`.
-Every command must succeed; full execution validates all 43 test identities.
+Every command must succeed; full execution validates all 53 test identities.
 TRX results are retained as artifacts even when tests fail. Hooks are disabled
 in CI; formatting checks do not modify files. Git hooks can be bypassed locally,
 so require the `Format, build and test` check through branch protection when
@@ -300,15 +323,16 @@ and uppercase `ExpectedCultures`. Their runtime test invokes the `culture-casing
 scenario and requires distinct Translations from both Resource Sets.
 
 Diagnostic tests still create isolated temporary SDK projects and build from a
-different working directory. Full execution starts two temporary SDK builds
-instead of nine: seven compatible diagnostic tests share one compilation and
-the malformed XML test uses another. That integration refactor preserved every
-test identity. The later diagnostic snapshot consolidation sets the current
-inventory to 27 fast / 43 full. Grouped assertions
+different working directory. Nine compatible aspect diagnostic tests share one
+temporary SDK compilation; the malformed XML test uses another. Named Argument Type,
+reference nullability and required-argument compiler diagnostics use a third
+consumer that references the compiled fixture API. The original integration
+refactor preserved every test identity. Named Placeholder coverage brings the
+current inventory to 30 fast / 53 full. Grouped assertions
 require the target source file, diagnostic code, and expected message on the
 same output line. Malformed XML is diagnosed by SDK resource generation before
 the aspect executes (`MSB3103`). The shared builds start lazily: runtime-only
-filtered runs do not compile temporary consumers. Filtering any diagnostic test
+filtered runs do not compile temporary consumers. Filtering a shared aspect diagnostic test
 starts both builds, and its test duration includes their shared setup cost.
 
 Rebuild the solution after changing fixture source or `.resx` files before using

@@ -1,0 +1,11 @@
+<root>
+  <data name="Mixed"><value>{0} {name} {2} {name@string}</value></data>
+  <data name="Types"><value>{id}|{offset:zzz}|{when:yyyy-MM-dd}|{amount@decimal:N1}|{ratio:F2}|{big}|{count}|{flag}|{text}</value></data>
+  <data name="NullableTypes"><value>{id@Guid?}|{offset:zzz}|{when:yyyy-MM-dd}|{amount:N1}|{ratio:F2}|{big}|{count}|{flag}|{text@string?}</value></data>
+  <data name="Layout"><value>{unknown,5} [{name,-4}] {{{amount,6:N1}}} {{literal}}</value></data>
+  <data name="Amount"><value>ES {amount:N1} {amount@decimal:N1}</value></data>
+  <data name="Keywords"><value>{_id} {Café} {class}</value></data>
+  <data name="Repeated"><value>{other} {value} {value}</value></data>
+  <data name="BadFormat"><value>{value:Q}</value></data>
+  <data name="CaseSensitive"><value>{Name} {name}</value></data>
+</root>

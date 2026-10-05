@@ -8,9 +8,13 @@ internal static class IndexedTexts
     var resourceCulture = global::System.Globalization.CultureInfo.CurrentUICulture;
     var formattingCulture = global::System.Globalization.CultureInfo.CurrentCulture;
     var text = (string)global::Consumer.Api.IndexedTexts.Summary(resourceCulture);
-    var arguments = new object? [3];
+    var arguments = new object? [2];
     arguments[0] = arg0;
-    arguments[2] = arg2;
+    arguments[1] = arg2;
+    if (text == "{2} / {0:N2} / {2}")
+    {
+      return (global::System.String)string.Format(formattingCulture, "{1} / {0:N2} / {1}", arguments);
+    }
     return (global::System.String)string.Format(formattingCulture, text, arguments);
   }
   public static global::System.String FormatSummary(global::System.Object? arg0, global::System.Object? arg2, global::System.Globalization.CultureInfo resourceCulture)
@@ -19,9 +23,13 @@ internal static class IndexedTexts
     var formattingCulture = global::System.Globalization.CultureInfo.CurrentCulture;
     resourceCulture_1 = (global::System.Globalization.CultureInfo)resourceCulture;
     var text = (string)global::Consumer.Api.IndexedTexts.Summary(resourceCulture_1);
-    var arguments = new object? [3];
+    var arguments = new object? [2];
     arguments[0] = arg0;
-    arguments[2] = arg2;
+    arguments[1] = arg2;
+    if (text == "{2} / {0:N2} / {2}")
+    {
+      return (global::System.String)string.Format(formattingCulture, "{1} / {0:N2} / {1}", arguments);
+    }
     return (global::System.String)string.Format(formattingCulture, text, arguments);
   }
   public static global::System.String FormatSummary(global::System.Object? arg0, global::System.Object? arg2, global::System.Globalization.CultureInfo resourceCulture, global::System.Globalization.CultureInfo formattingCulture)
@@ -32,9 +40,13 @@ internal static class IndexedTexts
     formattingCulture_1 = (global::System.Globalization.CultureInfo)formattingCulture;
     global::System.ArgumentNullException.ThrowIfNull(formattingCulture_1);
     var text = (string)global::Consumer.Api.IndexedTexts.Summary(resourceCulture_1);
-    var arguments = new object? [3];
+    var arguments = new object? [2];
     arguments[0] = arg0;
-    arguments[2] = arg2;
+    arguments[1] = arg2;
+    if (text == "{2} / {0:N2} / {2}")
+    {
+      return (global::System.String)string.Format(formattingCulture_1, "{1} / {0:N2} / {1}", arguments);
+    }
     return (global::System.String)string.Format(formattingCulture_1, text, arguments);
   }
   public static global::System.String Literal(global::System.Globalization.CultureInfo resourceCulture)

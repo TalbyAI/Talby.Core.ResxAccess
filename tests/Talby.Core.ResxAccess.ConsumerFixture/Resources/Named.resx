@@ -1,0 +1,11 @@
+<root>
+  <data name="Mixed"><value>{name@string} {2} {0} {name}</value></data>
+  <data name="Types"><value>{text@string}|{flag@bool}|{count@int}|{big@long}|{ratio@double:F1}|{amount@decimal:N2}|{when@DateTime:yyyy-MM-dd}|{offset@DateTimeOffset:zzz}|{id@Guid:D}</value></data>
+  <data name="NullableTypes"><value>{text@string?}|{flag@bool?}|{count@int?}|{big@long?}|{ratio@double?:F1}|{amount@decimal?:N2}|{when@DateTime?:yyyy-MM-dd}|{offset@DateTimeOffset?:zzz}|{id@Guid?:D}</value></data>
+  <data name="Layout"><value>{unknown,5} [{name@string?,-4}] {{{amount@decimal?,6:N1}}} {{literal}}</value></data>
+  <data name="Amount"><value>REF {amount@decimal:N2}</value></data>
+  <data name="Keywords"><value>{class@int} {Café} {_id@string}</value></data>
+  <data name="Repeated"><value>{value} {value@int} {other@string?} {value@int}</value></data>
+  <data name="BadFormat"><value>{value@int:Q}</value></data>
+  <data name="CaseSensitive"><value>{name} {Name}</value></data>
+</root>

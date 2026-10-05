@@ -3,6 +3,49 @@ namespace Consumer.Api;
 internal static class GeneratedTexts
 {
   private static readonly global::System.Resources.ResourceManager __resxResourceManager = (global::System.Resources.ResourceManager)(new("ConsumerRoot.Resources.Labels", typeof(global::Consumer.Api.GeneratedTexts).Assembly));
+  public static global::System.String FormatWelcome(global::System.Object? name)
+  {
+    var resourceCulture = global::System.Globalization.CultureInfo.CurrentUICulture;
+    var formattingCulture = global::System.Globalization.CultureInfo.CurrentCulture;
+    var text = (string)global::Consumer.Api.GeneratedTexts.Welcome(resourceCulture);
+    var arguments = new object? [1];
+    arguments[0] = name;
+    if (text == " Hello {name} ")
+    {
+      return (global::System.String)string.Format(formattingCulture, " Hello {0} ", arguments);
+    }
+    return (global::System.String)string.Format(formattingCulture, text, arguments);
+  }
+  public static global::System.String FormatWelcome(global::System.Object? name, global::System.Globalization.CultureInfo resourceCulture)
+  {
+    var resourceCulture_1 = global::System.Globalization.CultureInfo.CurrentUICulture;
+    var formattingCulture = global::System.Globalization.CultureInfo.CurrentCulture;
+    resourceCulture_1 = (global::System.Globalization.CultureInfo)resourceCulture;
+    var text = (string)global::Consumer.Api.GeneratedTexts.Welcome(resourceCulture_1);
+    var arguments = new object? [1];
+    arguments[0] = name;
+    if (text == " Hello {name} ")
+    {
+      return (global::System.String)string.Format(formattingCulture, " Hello {0} ", arguments);
+    }
+    return (global::System.String)string.Format(formattingCulture, text, arguments);
+  }
+  public static global::System.String FormatWelcome(global::System.Object? name, global::System.Globalization.CultureInfo resourceCulture, global::System.Globalization.CultureInfo formattingCulture)
+  {
+    var resourceCulture_1 = global::System.Globalization.CultureInfo.CurrentUICulture;
+    var formattingCulture_1 = global::System.Globalization.CultureInfo.CurrentCulture;
+    resourceCulture_1 = (global::System.Globalization.CultureInfo)resourceCulture;
+    formattingCulture_1 = (global::System.Globalization.CultureInfo)formattingCulture;
+    global::System.ArgumentNullException.ThrowIfNull(formattingCulture_1);
+    var text = (string)global::Consumer.Api.GeneratedTexts.Welcome(resourceCulture_1);
+    var arguments = new object? [1];
+    arguments[0] = name;
+    if (text == " Hello {name} ")
+    {
+      return (global::System.String)string.Format(formattingCulture_1, " Hello {0} ", arguments);
+    }
+    return (global::System.String)string.Format(formattingCulture_1, text, arguments);
+  }
   public static global::System.String Welcome(global::System.Globalization.CultureInfo resourceCulture)
   {
     global::System.ArgumentNullException.ThrowIfNull(resourceCulture);

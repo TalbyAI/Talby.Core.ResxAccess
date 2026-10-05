@@ -103,8 +103,8 @@ internal static class ResxAccessImplementation
                     args: new { cultureMethod }
                 );
                 if (
-                    resource.IndexedArguments.TryGetValue(key, out var indices)
-                    && indices.Length > 0
+                    resource.PlaceholderContracts.TryGetValue(key, out var contract)
+                    && contract.Arguments.Length > 0
                 )
                 {
                     for (var cultureCount = 0; cultureCount <= 2; cultureCount++)
@@ -115,11 +115,14 @@ internal static class ResxAccessImplementation
                             buildMethod: method =>
                             {
                                 method.Name = "Format" + key;
-                                foreach (var index in indices)
+                                foreach (var argument in contract.Arguments)
                                 {
+                                    var type = TypeFactory.GetType(argument.Type);
                                     method.AddParameter(
-                                        "arg" + index,
-                                        TypeFactory.GetType(typeof(object)).ToNullable()
+                                        argument.Name,
+                                        argument.TypeName.EndsWith("?", StringComparison.Ordinal)
+                                            ? type.ToNullable()
+                                            : type.ToNonNullable()
                                     );
                                 }
                                 if (overloadCultureCount >= 1)
@@ -134,7 +137,10 @@ internal static class ResxAccessImplementation
                             args: new
                             {
                                 rawTextMethod = cultureMethod,
-                                indices,
+                                parameterNames = contract
+                                    .Arguments.Select(argument => argument.Name)
+                                    .ToArray(),
+                                formats = contract.Formats,
                                 cultureCount,
                             }
                         );
