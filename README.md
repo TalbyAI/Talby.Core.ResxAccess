@@ -56,9 +56,41 @@ cultures without their own resource; they never excuse an incomplete resource
 that is present.
 
 `TRESX004` reports invalid Localized Resources; `TRESX005` reports invalid or
-missing Expected Cultures. Configurable Resource Key identifier policies and
-verification of incremental build and IDE refresh belong
-to dependent issues.
+missing Expected Cultures. Verification of incremental build and IDE refresh
+belongs to dependent issues.
+
+`InvalidKeyHandling` controls Resource Keys that cannot become C# method identifiers:
+
+- `Warn` (the default) omits their Raw Text and formatting methods and reports `TRESX006` warnings.
+- `Ignore` omits the same methods without identifier warnings.
+- `Normalize` replaces invalid identifier characters with underscores. A character invalid at the start is also replaced, so `1Text` becomes `_Text`.
+
+All policies validate the complete Resource Set and every Placeholder Contract,
+including omitted entries. Valid identifiers are preserved; C# keywords are
+escaped and can be called with syntax such as `Texts.@class()`.
+
+```csharp
+[GenerateResxAccess("Resources/Labels.resx", InvalidKeyHandling = InvalidKeyHandling.Normalize)]
+internal static class NormalizedTexts
+{
+}
+
+// Resource Key "has-dash": NormalizedTexts.has_dash();
+// With placeholders: NormalizedTexts.Formathas_dash(arguments);
+```
+
+Normalization reserves all valid Resource Key identifiers first, then processes
+invalid keys in ordinal order. Collisions receive `_2`, `_3`, and subsequent
+suffixes. For example, valid `a_b` and `a_b_2` reserve those names; `a b`, `a-b`,
+and `a.b` become `a_b_3`, `a_b_4`, and `a_b_5` regardless of resource entry order.
+Lookup always uses the original Resource Key and preserves its Translation.
+C# identifier comparisons ignore Unicode formatting characters.
+
+`TRESX007` rejects collisions with existing target-class members, the class name,
+the generated ResourceManager field, or other generated Raw Text and formatting
+member families. Normalization does not rename these conflicting families.
+Unsupported `InvalidKeyHandling` values receive `TRESX008` instead of selecting
+an omission policy.
 
 For a Reference Resource Translation such as `"{2} / {0:N2}"`, the generated API is:
 
@@ -196,8 +228,8 @@ dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-r
 The solution contains three test projects:
 
 - `Talby.Core.ResxAccess.UnitTests`: 20 tests of Metalama setup and shared Reference Resource validation.
-- `Talby.Core.ResxAccess.IntegrationTests`: 23 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
-- `Talby.Core.ResxAccess.AspectTests`: 10 dedicated Metalama snapshot tests.
+- `Talby.Core.ResxAccess.IntegrationTests`: 28 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
+- `Talby.Core.ResxAccess.AspectTests`: 12 dedicated Metalama snapshot tests.
 
 The [testing criterion](docs/agents/testing.md) defines test placement,
 compatible diagnostic grouping, assertion preservation, negative controls and
@@ -208,9 +240,14 @@ invocations while retaining every diagnostic expectation; filtering and failure
 reporting now operate on the grouped snapshot. `NamedPlaceholderDiagnostics`
 adds 20 targets in Reference and Localized Resource behavior groups; its
 generation snapshot checks all supported Argument Types and mixed ordering.
+`ResourceKeyIdentifiers` distinguishes default Warn from explicit Ignore;
+`NormalizedResourceKeyGeneration` checks normalized Raw Text and formatting
+members, original-key lookup and valid-name reservation.
+`ResourceKeyIdentifierDiagnostics` groups 13 named cases for existing/generated
+member collisions and validation of entries omitted by Warn or Ignore.
 
 The integration test classes share an xUnit collection fixture that caches one
-build for nine compatible diagnostic tests. Malformed XML uses a separate
+build for twelve compatible diagnostic tests. Malformed XML uses a separate
 consumer project because SDK resource generation fails before aspects execute.
 The fixture starts these two builds concurrently, with isolated consumer bin/obj
 directories. `ConsumerProject.Build()` sets `BuildProjectReferences=false` and
@@ -258,13 +295,15 @@ covering generated signatures, independent cultures, composite formatting, runti
 failures, malformed syntax, and Localized Resource Placeholder Contracts, plus seven
 `NamedPlaceholderConsumerTests` covering all supported Argument Types/nullability,
 Named and mixed parameter order, formats, cultures, precise diagnostics, and
-compiler enforcement. Its output names the deferred
+compiler enforcement, plus five `ResourceKeyIdentifierConsumerTests` covering
+deterministic normalization, escaped names, omission policies, collisions and
+validation of omitted entries. Its output names the deferred
 tests. Fast success does not verify generation or runtime lookup end to end.
 Full applies no filter; the standard solution-level `dotnet test` command above
 also continues to select every test.
 
 Each entry point propagates test failures and checks the passed TRX identities
-against the fixed inventory (30 fast, 53 full), rejecting
+against the fixed inventory (32 fast, 60 full), rejecting
 empty, skipped, missing, duplicate, or unexpected selections. Adding, grouping,
 or renaming tests requires reviewing and updating that inventory in `tests/run.ps1`.
 Unique TRX directories under ignored `test-results/execution/` prevent stale
@@ -285,7 +324,7 @@ The [GitHub Actions workflow](.github/workflows/validate.yml) runs on pull
 requests, pushes to `main` and manual dispatch. It sets up the SDK from
 `global.json` and Node.js 24, restores .NET tools, runs `npm ci`, checks formatting,
 restores the solution, builds Release and runs `tests/run.ps1 -Mode full`.
-Every command must succeed; full execution validates all 53 test identities.
+Every command must succeed; full execution validates all 60 test identities.
 TRX results are retained as artifacts even when tests fail. Hooks are disabled
 in CI; formatting checks do not modify files. Git hooks can be bypassed locally,
 so require the `Format, build and test` check through branch protection when
@@ -323,12 +362,14 @@ and uppercase `ExpectedCultures`. Their runtime test invokes the `culture-casing
 scenario and requires distinct Translations from both Resource Sets.
 
 Diagnostic tests still create isolated temporary SDK projects and build from a
-different working directory. Nine compatible aspect diagnostic tests share one
+different working directory. Twelve compatible aspect diagnostic tests share one
 temporary SDK compilation; the malformed XML test uses another. Named Argument Type,
 reference nullability and required-argument compiler diagnostics use a third
 consumer that references the compiled fixture API. The original integration
 refactor preserved every test identity. Named Placeholder coverage brings the
-current inventory to 30 fast / 53 full. Grouped assertions
+inventory to 30 fast / 53 full at that point. Resource Key identifier policies
+add two AspectTests and five IntegrationTests, bringing the current inventory to
+32 fast / 60 full. Grouped assertions
 require the target source file, diagnostic code, and expected message on the
 same output line. Malformed XML is diagnosed by SDK resource generation before
 the aspect executes (`MSB3103`). The shared builds start lazily: runtime-only

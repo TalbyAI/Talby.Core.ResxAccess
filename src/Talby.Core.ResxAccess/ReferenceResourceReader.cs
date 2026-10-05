@@ -355,5 +355,5 @@ internal static class ReferenceResourceReader
     }
 
     public static bool IsResourceKeyIdentifier(string key) =>
-        Regex.IsMatch(key, @"^[_\p{L}\p{Nl}][_\p{L}\p{Nl}\p{Nd}\p{Pc}\p{Mn}\p{Mc}\p{Cf}]*$");
+        Regex.IsMatch(key, @"\A[_\p{L}\p{Nl}][_\p{L}\p{Nl}\p{Nd}\p{Pc}\p{Mn}\p{Mc}\p{Cf}]*\z");
 }

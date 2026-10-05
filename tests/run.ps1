@@ -38,6 +38,13 @@ $integration += @(
     'RejectsChangedNamedAndMixedContractsIncludingNullabilityAndOmittedKeys'
     'ConsumerCompilerEnforcesNamedTypesNullabilityAndRequiredArguments'
 ) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.NamedPlaceholderConsumerTests.$_" }
+$integration += @(
+    'NormalizesReproduciblyAndInvokesOriginalKeysAndEscapedKeywords'
+    'WarnAndIgnoreOmitTheSameMembersWithDistinctDiagnostics'
+    'RejectsExistingMembersAndGeneratedMemberFamilyCollisions'
+    'OmittedKeysStillReportResourceSetAndPlaceholderContractErrorsInBothPolicies'
+    'RejectsUnsupportedIdentifierPolicies'
+) | ForEach-Object { "Talby.Core.ResxAccess.IntegrationTests.ResourceKeyIdentifierConsumerTests.$_" }
 $fast = @(
     'Talby.Core.ResxAccess.UnitTests.MetalamaSetupTests.CanCreateAndQueryCompilation'
     'InvalidPaths'
@@ -45,6 +52,8 @@ $fast = @(
     'UnsupportedTargets'
     'RawTextGeneration'
     'ResourceKeyIdentifiers'
+    'NormalizedResourceKeyGeneration'
+    'ResourceKeyIdentifierDiagnostics'
     'ResourceValidationDiagnostics'
     'KeywordResourceKey'
     'IndexedPlaceholderGeneration'

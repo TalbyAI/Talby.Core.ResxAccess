@@ -15,6 +15,8 @@ internal sealed class DeterministicResxAccessAttribute : TypeAspect
 
     public string[]? ExpectedCultures { get; set; }
 
+    public InvalidKeyHandling InvalidKeyHandling { get; set; } = InvalidKeyHandling.Warn;
+
     public DeterministicResxAccessAttribute(
         string xml,
         string metadata = "ConsumerRoot.Resources.Labels||||false",
@@ -54,7 +56,8 @@ internal sealed class DeterministicResxAccessAttribute : TypeAspect
                 "Labels.resx",
                 Path.Combine(directory, "Consumer.csproj"),
                 mapPath,
-                ExpectedCultures
+                ExpectedCultures,
+                InvalidKeyHandling
             );
         }
         finally

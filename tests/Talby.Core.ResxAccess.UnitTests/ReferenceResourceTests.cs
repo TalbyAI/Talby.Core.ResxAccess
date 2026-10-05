@@ -346,7 +346,7 @@ public class ReferenceResourceTests
         {
             Assert.True(ReferenceResourceReader.IsResourceKeyIdentifier(key), key);
         }
-        foreach (var key in new[] { "", "two words", "has-dash", "1Text", "😀" })
+        foreach (var key in new[] { "", "two words", "has-dash", "1Text", "😀", "End\n" })
         {
             Assert.False(ReferenceResourceReader.IsResourceKeyIdentifier(key), key);
         }

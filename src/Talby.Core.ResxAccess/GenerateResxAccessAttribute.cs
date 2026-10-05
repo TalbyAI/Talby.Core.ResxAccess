@@ -14,6 +14,9 @@ public sealed class GenerateResxAccessAttribute : TypeAspect
     /// <summary>Requires a Localized Resource for each culture name, in addition to validating all discovered cultures.</summary>
     public string[]? ExpectedCultures { get; set; }
 
+    /// <summary>Controls invalid Resource Key identifiers without disabling Resource Set validation.</summary>
+    public InvalidKeyHandling InvalidKeyHandling { get; set; } = InvalidKeyHandling.Warn;
+
     public GenerateResxAccessAttribute(string referenceResource)
     {
         _referenceResource = referenceResource;
@@ -28,7 +31,8 @@ public sealed class GenerateResxAccessAttribute : TypeAspect
             _referenceResource,
             project.Path,
             resourceMap,
-            ExpectedCultures
+            ExpectedCultures,
+            InvalidKeyHandling
         );
     }
 

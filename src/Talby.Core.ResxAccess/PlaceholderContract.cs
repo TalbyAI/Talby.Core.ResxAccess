@@ -276,7 +276,7 @@ internal sealed class PlaceholderContract
         }
     }
 
-    private static string DescribeIdentifier(string identifier) =>
+    public static string DescribeIdentifier(string identifier) =>
         string.Concat(
             identifier.Select(character =>
                 char.IsControl(character)

@@ -1,0 +1,13 @@
+// Error TRESX007 on `ExistingRawMember`: `Resource Access member collision: Resource Key 'Plain' in 'Labels.resx' generates member 'Plain', which collides with an existing target-class member.`
+// Error TRESX007 on `ExistingNormalizedFormattingMember`: `Resource Access member collision: Resource Key 'has-dash' in 'Labels.resx' generates member 'Formathas_dash', which collides with an existing target-class member.`
+// Error TRESX007 on `GeneratedMemberFamilies`: `Resource Access member collision: Resource Key 'Plain' in 'Labels.resx' generates member 'FormatPlain', which collides with the member family for Resource Key 'FormatPlain'.`
+// Error TRESX007 on `NormalizedMemberFamilies`: `Resource Access member collision: Resource Key 'Plain!' in 'Labels.resx' generates member 'FormatPlain_', which collides with the member family for Resource Key 'FormatPlain!'.`
+// Error TRESX007 on `UnicodeMemberFamilies`: `Resource Access member collision: Resource Key 'a\u200Db' in 'Labels.resx' generates member 'a\u200Db', which collides with the member family for Resource Key 'ab'.`
+// Error TRESX007 on `ResourceManagerMember`: `Resource Access member collision: Resource Key '__resxResourceManager' in 'Labels.resx' generates member '__resxResourceManager', which collides with the generated ResourceManager field.`
+// Error TRESX001 on `WarnMalformedPlaceholder`: `Invalid Reference Resource: 'Labels.resx' Resource Key 'invalid-key' has a malformed Formatting Placeholder: Unclosed Formatting Placeholder.`
+// Error TRESX001 on `IgnoreMalformedPlaceholder`: `Invalid Reference Resource: 'Labels.resx' Resource Key 'invalid-key' has a malformed Formatting Placeholder: Unclosed Formatting Placeholder.`
+// Error TRESX001 on `WarnNonText`: `Invalid Reference Resource: 'Labels.resx' must contain unique, named text entries with one value each.`
+// Error TRESX001 on `IgnoreNonText`: `Invalid Reference Resource: 'Labels.resx' must contain unique, named text entries with one value each.`
+// Error TRESX004 on `WarnLocalizedContract`: `Invalid Localized Resource: 'Labels.es.resx' Resource Key 'invalid-key' has a malformed Formatting Placeholder: Named Placeholder 'name' declares Argument Type 'string'; the Reference Resource requires 'int'.`
+// Error TRESX004 on `IgnoreLocalizedContract`: `Invalid Localized Resource: 'Labels.es.resx' Resource Key 'invalid-key' has a malformed Formatting Placeholder: Named Placeholder 'name' declares Argument Type 'string'; the Reference Resource requires 'int'.`
+// Error TRESX008 on `UnsupportedIdentifierPolicy`: `InvalidKeyHandling value '99' is unsupported. Specify Warn, Ignore, or Normalize.`
