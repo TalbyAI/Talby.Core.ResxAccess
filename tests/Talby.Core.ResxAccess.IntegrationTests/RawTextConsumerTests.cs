@@ -11,13 +11,43 @@ public class RawTextConsumerTests
         this.diagnostics = diagnostics;
     }
 
-    private static readonly (string Target, string Resource, string Code, string Message)[] InvalidResourceCases = new[]
+    private static readonly (
+        string Target,
+        string Resource,
+        string Code,
+        string Message
+    )[] InvalidResourceCases = new[]
     {
-        (Target: "LogicalNameTarget", Resource: "Resources/LogicalName.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/LogicalName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
-        (Target: "ManifestResourceNameTarget", Resource: "Resources/ManifestResourceName.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/ManifestResourceName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
-        (Target: "LinkedTarget", Resource: "Resources/Linked.resx", Code: "TRESX003", Message: "Unsupported Reference Resource embedding: 'Resources/Linked.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."),
-        (Target: "MissingResourceTarget", Resource: "Resources/Missing.resx", Code: "TRESX001", Message: "Invalid Reference Resource: 'Resources/Missing.resx' does not exist in the consumer project."),
-        (Target: "LocalizedResourceTarget", Resource: "Resources/Localized.es.resx", Code: "TRESX001", Message: "Invalid Reference Resource: 'Resources/Localized.es.resx' is culture-specific; select the culture-neutral Reference Resource.")
+        (
+            Target: "LogicalNameTarget",
+            Resource: "Resources/LogicalName.resx",
+            Code: "TRESX003",
+            Message: "Unsupported Reference Resource embedding: 'Resources/LogicalName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."
+        ),
+        (
+            Target: "ManifestResourceNameTarget",
+            Resource: "Resources/ManifestResourceName.resx",
+            Code: "TRESX003",
+            Message: "Unsupported Reference Resource embedding: 'Resources/ManifestResourceName.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."
+        ),
+        (
+            Target: "LinkedTarget",
+            Resource: "Resources/Linked.resx",
+            Code: "TRESX003",
+            Message: "Unsupported Reference Resource embedding: 'Resources/Linked.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."
+        ),
+        (
+            Target: "MissingResourceTarget",
+            Resource: "Resources/Missing.resx",
+            Code: "TRESX001",
+            Message: "Invalid Reference Resource: 'Resources/Missing.resx' does not exist in the consumer project."
+        ),
+        (
+            Target: "LocalizedResourceTarget",
+            Resource: "Resources/Localized.es.resx",
+            Code: "TRESX001",
+            Message: "Invalid Reference Resource: 'Resources/Localized.es.resx' is culture-specific; select the culture-neutral Reference Resource."
+        ),
     };
 
     internal const string ReferenceResource = """
@@ -34,9 +64,14 @@ public class RawTextConsumerTests
     [Fact]
     public async Task CanCompileAndInvokeIndependentResourceSets()
     {
-        var invocation = await ConsumerProject.Invoke(typeof(Customer.Api.AssociatedTexts).Assembly.Location);
+        var invocation = await ConsumerProject.Invoke(
+            typeof(Customer.Api.AssociatedTexts).Assembly.Location
+        );
         Assert.True(invocation.ExitCode == 0, invocation.Output);
-        Assert.Equal("  Hello {name@string}, {0:N2}!  \n  Hello {name@string}, {0:N2}!  \nBasic text\nAssociated Texto\nAssociated Texte\nAssociated text\n  Associated hello {name@string}, {0:N2}!  \nPreserved\n", invocation.Output.Replace("\r\n", "\n"));
+        Assert.Equal(
+            "  Hello {name@string}, {0:N2}!  \n  Hello {name@string}, {0:N2}!  \nBasic text\nAssociated Texto\nAssociated Texte\nAssociated text\n  Associated hello {name@string}, {0:N2}!  \nPreserved\n",
+            invocation.Output.Replace("\r\n", "\n")
+        );
     }
 
     [Fact]
@@ -47,7 +82,12 @@ public class RawTextConsumerTests
         var diagnosticLines = build.Output.Split('\n');
         foreach (var (target, _, code, message) in InvalidResourceCases)
         {
-            Assert.Contains(diagnosticLines, line => line.Contains($"{target}.cs(", StringComparison.Ordinal) && line.Contains($"error {code}: {message}", StringComparison.Ordinal));
+            Assert.Contains(
+                diagnosticLines,
+                line =>
+                    line.Contains($"{target}.cs(", StringComparison.Ordinal)
+                    && line.Contains($"error {code}: {message}", StringComparison.Ordinal)
+            );
         }
     }
 
@@ -65,7 +105,10 @@ public class RawTextConsumerTests
     {
         foreach (var scenario in new[] { "missing-manifest", "missing-key" })
         {
-            var invocation = await ConsumerProject.Invoke(typeof(Customer.Api.AssociatedTexts).Assembly.Location, scenario);
+            var invocation = await ConsumerProject.Invoke(
+                typeof(Customer.Api.AssociatedTexts).Assembly.Location,
+                scenario
+            );
             Assert.True(invocation.ExitCode == 0, invocation.Output);
             Assert.Equal("Descriptive failure", invocation.Output.Trim());
         }
@@ -75,13 +118,16 @@ public class RawTextConsumerTests
     {
         foreach (var (target, resource, _, _) in InvalidResourceCases)
         {
-            consumer.Write($"{target}.cs", $$"""
+            consumer.Write(
+                $"{target}.cs",
+                $$"""
                 using Talby.Core.ResxAccess;
                 [GenerateResxAccess("{{resource}}")]
                 public static class {{target}}
                 {
                 }
-                """);
+                """
+            );
             if (target != "MissingResourceTarget")
             {
                 consumer.Write(resource, ReferenceResource);

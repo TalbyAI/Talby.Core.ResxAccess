@@ -7,7 +7,7 @@
 #endif
 namespace Consumer.Api;
 
-[DeterministicResxAccess("<root><data name=\"Welcome\"><value> Hello {name} </value></data></root>")]
-internal static class GeneratedTexts
-{
-}
+[DeterministicResxAccess(
+    "<root><data name=\"Welcome\"><value> Hello {name} </value></data></root>"
+)]
+internal static class GeneratedTexts { }

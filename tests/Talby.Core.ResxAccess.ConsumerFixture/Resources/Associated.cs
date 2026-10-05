@@ -1,5 +1,3 @@
 namespace Unrelated.Namespace;
 
-public class ResourceAnchor
-{
-}
+public class ResourceAnchor { }

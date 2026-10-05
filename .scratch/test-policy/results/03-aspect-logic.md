@@ -344,7 +344,6 @@ assertions and scenarios, not replacing equivalent protection with fewer tests.
 Two temporary SDK builds remain per full run, with the same fixture prerequisite
 and runtime process counts. No fixed speedup is promised.
 
-
 ## Final verification and recommendation
 
 After measurements, the final Release solution build succeeds with zero

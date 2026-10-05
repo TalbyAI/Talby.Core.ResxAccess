@@ -1,0 +1,2 @@
+# Git hooks must remain executable by the POSIX shell on Windows and Linux.
+.husky/* text eol=lf

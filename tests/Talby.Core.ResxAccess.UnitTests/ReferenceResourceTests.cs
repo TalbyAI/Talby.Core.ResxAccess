@@ -5,9 +5,15 @@ public class ReferenceResourceTests
     [Fact]
     public void ReadsTextEntriesAndSdkManifestName()
     {
-        using var resource = new ResourceInput("<root><data name=\"Welcome\"><value> Hello {name} </value></data></root>");
+        using var resource = new ResourceInput(
+            "<root><data name=\"Welcome\"><value> Hello {name} </value></data></root>"
+        );
 
-        var result = ReferenceResourceReader.Read(resource.ReferencePath, resource.ProjectPath, resource.MapPath);
+        var result = ReferenceResourceReader.Read(
+            resource.ReferencePath,
+            resource.ProjectPath,
+            resource.MapPath
+        );
 
         Assert.Equal("ConsumerRoot.Resources.Labels", result.ManifestBaseName);
         Assert.Equal(new[] { "Welcome" }, result.Keys);
@@ -16,12 +22,14 @@ public class ReferenceResourceTests
     [Fact]
     public void AcceptsExplicitStringTypesEmptyValuesAndCaseSensitiveKeys()
     {
-        using var resource = new ResourceInput("""
+        using var resource = new ResourceInput(
+            """
             <root>
               <data name="Text" type="System.String, mscorlib"><value /></data>
               <data name="text"><value>Raw {0:N2}</value></data>
             </root>
-            """);
+            """
+        );
         Assert.Equal(new[] { "Text", "text" }, resource.Read().Keys);
     }
 
@@ -41,12 +49,18 @@ public class ReferenceResourceTests
             var directory = Path.GetDirectoryName(resource.ResourcePath)!;
             var localizedPath = Path.Combine(directory, "Labels.es-MX.resx");
             File.WriteAllText(localizedPath, "<root />");
-            File.AppendAllText(resource.MapPath, $"\n{localizedPath}|ConsumerRoot.Resources.Labels.es-MX||||true");
+            File.AppendAllText(
+                resource.MapPath,
+                $"\n{localizedPath}|ConsumerRoot.Resources.Labels.es-MX||||true"
+            );
             Assert.Empty(resource.Read().Keys);
 
             var duplicatePath = Path.Combine(directory, duplicateName);
             File.WriteAllText(duplicatePath, "<root />");
-            File.AppendAllText(resource.MapPath, $"\n{duplicatePath}|ConsumerRoot.Resources.Labels.{Path.GetFileNameWithoutExtension(duplicateName)["Labels.".Length..]}||||true");
+            File.AppendAllText(
+                resource.MapPath,
+                $"\n{duplicatePath}|ConsumerRoot.Resources.Labels.{Path.GetFileNameWithoutExtension(duplicateName)["Labels.".Length..]}||||true"
+            );
 
             // Case-insensitive file systems retain one file when the spelling changes.
             if (Directory.GetFiles(directory).Length == 2)
@@ -58,7 +72,10 @@ public class ReferenceResourceTests
             var error = Assert.Throws<ResourceValidationException>(() => resource.Read());
             Assert.True(error.LocalizedResource);
             Assert.Contains("'Resources/Labels.es-", error.Message);
-            Assert.Contains("duplicate Localized Resource for Resource Culture 'es-MX'", error.Message);
+            Assert.Contains(
+                "duplicate Localized Resource for Resource Culture 'es-MX'",
+                error.Message
+            );
         }
     }
 
@@ -77,39 +94,52 @@ public class ReferenceResourceTests
         foreach (var xml in new[] { "<resources />", "<root xmlns=\"urn:other\" />" })
         {
             using var resource = new ResourceInput(xml);
-            AssertInvalidReference(resource, "'Resources/Labels.resx' must contain a resx root element.");
+            AssertInvalidReference(
+                resource,
+                "'Resources/Labels.resx' must contain a resx root element."
+            );
         }
     }
 
     [Fact]
     public void RejectsDuplicateOrUnnamedResourceKeys()
     {
-        foreach (var entries in new[]
-        {
-            "<data><value>Text</value></data>",
-            "<data name=\"\"><value>Text</value></data>",
-            "<data name=\"Same\"><value>One</value></data><data name=\"Same\"><value>Two</value></data>"
-        })
+        foreach (
+            var entries in new[]
+            {
+                "<data><value>Text</value></data>",
+                "<data name=\"\"><value>Text</value></data>",
+                "<data name=\"Same\"><value>One</value></data><data name=\"Same\"><value>Two</value></data>",
+            }
+        )
         {
             using var resource = new ResourceInput($"<root>{entries}</root>");
-            AssertInvalidReference(resource, "'Resources/Labels.resx' must contain unique, named text entries with one value each.");
+            AssertInvalidReference(
+                resource,
+                "'Resources/Labels.resx' must contain unique, named text entries with one value each."
+            );
         }
     }
 
     [Fact]
     public void RejectsInvalidValueAndTypeStructures()
     {
-        foreach (var entry in new[]
-        {
-            "<data name=\"Text\" />",
-            "<data name=\"Text\"><value>One</value><value>Two</value></data>",
-            "<data name=\"Text\" mimetype=\"\"><value>Text</value></data>",
-            "<data name=\"Text\" type=\"System.Int32, mscorlib\"><value>1</value></data>",
-            "<data name=\"Text\" type=\"\"><value>Text</value></data>"
-        })
+        foreach (
+            var entry in new[]
+            {
+                "<data name=\"Text\" />",
+                "<data name=\"Text\"><value>One</value><value>Two</value></data>",
+                "<data name=\"Text\" mimetype=\"\"><value>Text</value></data>",
+                "<data name=\"Text\" type=\"System.Int32, mscorlib\"><value>1</value></data>",
+                "<data name=\"Text\" type=\"\"><value>Text</value></data>",
+            }
+        )
         {
             using var resource = new ResourceInput($"<root>{entry}</root>");
-            AssertInvalidReference(resource, "'Resources/Labels.resx' must contain unique, named text entries with one value each.");
+            AssertInvalidReference(
+                resource,
+                "'Resources/Labels.resx' must contain unique, named text entries with one value each."
+            );
         }
     }
 
@@ -118,22 +148,32 @@ public class ReferenceResourceTests
     {
         foreach (var path in new[] { null, "", " ", "Labels.txt" })
         {
-            var error = Assert.Throws<ResourceValidationException>(() => ReferenceResourceReader.Read(path!, null, null));
+            var error = Assert.Throws<ResourceValidationException>(() =>
+                ReferenceResourceReader.Read(path!, null, null)
+            );
             Assert.False(error.UnsupportedEmbedding);
-            Assert.Equal("Specify a culture-neutral .resx path relative to the consumer project directory.", error.Message);
+            Assert.Equal(
+                "Specify a culture-neutral .resx path relative to the consumer project directory.",
+                error.Message
+            );
         }
     }
 
     [Fact]
     public void DistinguishesUnavailableProjectContextFromMissingFiles()
     {
-        var contextError = Assert.Throws<ResourceValidationException>(() => ReferenceResourceReader.Read("Labels.resx", null, null));
+        var contextError = Assert.Throws<ResourceValidationException>(() =>
+            ReferenceResourceReader.Read("Labels.resx", null, null)
+        );
         Assert.True(contextError.UnsupportedEmbedding);
         Assert.Equal("The consumer project directory is unavailable.", contextError.Message);
 
         using var resource = new ResourceInput("<root />");
         File.Delete(resource.ResourcePath);
-        AssertInvalidReference(resource, "'Resources/Labels.resx' does not exist in the consumer project.");
+        AssertInvalidReference(
+            resource,
+            "'Resources/Labels.resx' does not exist in the consumer project."
+        );
     }
 
     [Fact]
@@ -141,18 +181,28 @@ public class ReferenceResourceTests
     {
         using var resource = new ResourceInput("<root />", "Resources/Labels.es.resx");
         File.Delete(resource.MapPath);
-        AssertInvalidReference(resource, "'Resources/Labels.es.resx' is culture-specific; select the culture-neutral Reference Resource.");
+        AssertInvalidReference(
+            resource,
+            "'Resources/Labels.es.resx' is culture-specific; select the culture-neutral Reference Resource."
+        );
     }
 
     [Fact]
     public void RejectsUnavailableSdkMaps()
     {
         using var resource = new ResourceInput("<root />");
-        foreach (var mapPath in new[] { null, "", Path.Combine(resource.DirectoryPath, "Missing.txt") })
+        foreach (
+            var mapPath in new[] { null, "", Path.Combine(resource.DirectoryPath, "Missing.txt") }
+        )
         {
-            var error = Assert.Throws<ResourceValidationException>(() => ReferenceResourceReader.Read(resource.ReferencePath, resource.ProjectPath, mapPath));
+            var error = Assert.Throws<ResourceValidationException>(() =>
+                ReferenceResourceReader.Read(resource.ReferencePath, resource.ProjectPath, mapPath)
+            );
             Assert.True(error.UnsupportedEmbedding);
-            Assert.Equal("The SDK resource map is unavailable. Import Talby.Core.ResxAccess.targets when using a ProjectReference.", error.Message);
+            Assert.Equal(
+                "The SDK resource map is unavailable. Import Talby.Core.ResxAccess.targets when using a ProjectReference.",
+                error.Message
+            );
         }
     }
 
@@ -160,10 +210,21 @@ public class ReferenceResourceTests
     public void RejectsMissingOrMalformedEmbeddedResourceMetadata()
     {
         using var resource = new ResourceInput("<root />");
-        foreach (var map in new[] { "", "wrong|shape", $"{resource.ResourcePath}|||||false", "other.resx|Other||||false" })
+        foreach (
+            var map in new[]
+            {
+                "",
+                "wrong|shape",
+                $"{resource.ResourcePath}|||||false",
+                "other.resx|Other||||false",
+            }
+        )
         {
             File.WriteAllText(resource.MapPath, map);
-            AssertUnsupportedEmbedding(resource, "'Resources/Labels.resx' must be an SDK EmbeddedResource.");
+            AssertUnsupportedEmbedding(
+                resource,
+                "'Resources/Labels.resx' must be an SDK EmbeddedResource."
+            );
         }
     }
 
@@ -171,10 +232,20 @@ public class ReferenceResourceTests
     public void RejectsCustomNamesAndLinkedResourceMetadata()
     {
         using var resource = new ResourceInput("<root />");
-        foreach (var metadata in new[] { "Name|Custom|||false", "Name||Custom||false", "Name|||Other/Labels.resx|false" })
+        foreach (
+            var metadata in new[]
+            {
+                "Name|Custom|||false",
+                "Name||Custom||false",
+                "Name|||Other/Labels.resx|false",
+            }
+        )
         {
             File.WriteAllText(resource.MapPath, $"{resource.ResourcePath}|{metadata}");
-            AssertUnsupportedEmbedding(resource, "'Resources/Labels.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration.");
+            AssertUnsupportedEmbedding(
+                resource,
+                "'Resources/Labels.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration."
+            );
         }
     }
 
@@ -183,9 +254,14 @@ public class ReferenceResourceTests
     {
         using var resource = new ResourceInput("<root />");
         var projectPath = Path.Combine(resource.DirectoryPath, "Child", "Consumer.csproj");
-        var error = Assert.Throws<ResourceValidationException>(() => ReferenceResourceReader.Read("../Resources/Labels.resx", projectPath, resource.MapPath));
+        var error = Assert.Throws<ResourceValidationException>(() =>
+            ReferenceResourceReader.Read("../Resources/Labels.resx", projectPath, resource.MapPath)
+        );
         Assert.True(error.UnsupportedEmbedding);
-        Assert.Equal("'../Resources/Labels.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration.", error.Message);
+        Assert.Equal(
+            "'../Resources/Labels.resx' uses LogicalName, ManifestResourceName, or linked-resource configuration.",
+            error.Message
+        );
     }
 
     [Fact]
@@ -193,21 +269,30 @@ public class ReferenceResourceTests
     {
         using var resource = new ResourceInput("<root />");
         File.WriteAllText(resource.MapPath, $"{resource.ResourcePath}|Name||||TRUE");
-        AssertInvalidReference(resource, "'Resources/Labels.resx' is embedded as a culture-specific resource.");
+        AssertInvalidReference(
+            resource,
+            "'Resources/Labels.resx' is embedded as a culture-specific resource."
+        );
     }
 
     [Fact]
     public void MatchesResourceMapPathsUsingPlatformComparison()
     {
         using var resource = new ResourceInput("<root />");
-        File.WriteAllText(resource.MapPath, $"{resource.ResourcePath.ToUpperInvariant()}|Name||||false");
+        File.WriteAllText(
+            resource.MapPath,
+            $"{resource.ResourcePath.ToUpperInvariant()}|Name||||false"
+        );
         if (Path.DirectorySeparatorChar == '\\')
         {
             Assert.Equal("Name", resource.Read().ManifestBaseName);
         }
         else
         {
-            AssertUnsupportedEmbedding(resource, "'Resources/Labels.resx' must be an SDK EmbeddedResource.");
+            AssertUnsupportedEmbedding(
+                resource,
+                "'Resources/Labels.resx' must be an SDK EmbeddedResource."
+            );
         }
     }
 
@@ -240,7 +325,11 @@ public class ReferenceResourceTests
 
     private sealed class ResourceInput : IDisposable
     {
-        private readonly string _directory = Path.Combine(Path.GetTempPath(), "ResxAccessUnitTests", Guid.NewGuid().ToString("N"));
+        private readonly string _directory = Path.Combine(
+            Path.GetTempPath(),
+            "ResxAccessUnitTests",
+            Guid.NewGuid().ToString("N")
+        );
         public string DirectoryPath => _directory;
         public string ReferencePath { get; }
         public string ResourcePath => Path.GetFullPath(Path.Combine(_directory, ReferencePath));

@@ -1,0 +1,7 @@
+{
+  "*.{cs,csx,config,csproj,props,slnx,targets,xml}": [
+    "dotnet csharpier format",
+    "dotnet csharpier check"
+  ],
+  "*.{md,markdown}": "markdownlint-cli2 --fix --no-globs"
+}

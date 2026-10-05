@@ -34,7 +34,11 @@ internal static class IndexedPlaceholderContract
                 var start = position;
                 var index = 0;
                 // Match string.Format's bounded numeric scan, including leading zeros.
-                while (position < text.Length && text[position] is >= '0' and <= '9' && index < 1_000_000)
+                while (
+                    position < text.Length
+                    && text[position] is >= '0' and <= '9'
+                    && index < 1_000_000
+                )
                 {
                     index = index * 10 + text[position] - '0';
                     position++;
@@ -42,7 +46,9 @@ internal static class IndexedPlaceholderContract
                 var endOfIndex = position;
                 if (position < text.Length && text[position] is >= '0' and <= '9')
                 {
-                    throw new FormatException("Indexed Placeholder identity exceeds the composite-format limit.");
+                    throw new FormatException(
+                        "Indexed Placeholder identity exceeds the composite-format limit."
+                    );
                 }
                 while (position < text.Length && text[position] != '}')
                 {
@@ -62,7 +68,11 @@ internal static class IndexedPlaceholderContract
                     // The framework is the syntax authority for indexed composite formatting.
                     // Remap this one identity to zero so syntax validation needs one null
                     // argument regardless of index gaps, without evaluating Argument Formats.
-                    string.Format(CultureInfo.InvariantCulture, "{0" + text.Substring(endOfIndex, position - endOfIndex + 1), new object?[] { null });
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "{0" + text.Substring(endOfIndex, position - endOfIndex + 1),
+                        new object?[] { null }
+                    );
                     arguments.Add(index);
                 }
                 else if (start < position && (char.IsLetter(text[start]) || text[start] == '_'))
@@ -77,7 +87,9 @@ internal static class IndexedPlaceholderContract
         }
         catch (Exception exception) when (exception is FormatException or OverflowException)
         {
-            throw new ResourceValidationException($"'{resourceName}' Resource Key '{key}' has a malformed Formatting Placeholder: {exception.Message}");
+            throw new ResourceValidationException(
+                $"'{resourceName}' Resource Key '{key}' has a malformed Formatting Placeholder: {exception.Message}"
+            );
         }
 
         return hasNamedPlaceholders ? null : arguments.ToArray();

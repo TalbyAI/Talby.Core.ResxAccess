@@ -160,4 +160,3 @@ The initial release supports text resources embedded under standard .NET SDK con
 ## Comments
 
 - The user confirmed the consumer-project acceptance boundary and asked whether a dedicated aspect test project was needed. After reviewing Metalama's official documentation, the specification includes a separate aspect snapshot project for introduced code and diagnostics, with consumer integration checks retained for runtime and build/IDE behavior.
-
