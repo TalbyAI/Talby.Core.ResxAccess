@@ -7,6 +7,8 @@
 #endif
 namespace Consumer.Api;
 
+using Talby.Core.ResxAccess;
+
 [DeterministicResxAccess(
     """
         <root>
@@ -20,3 +22,9 @@ namespace Consumer.Api;
         """
 )]
 internal static class IdentifierTexts { }
+
+[DeterministicResxAccess(
+    "<root><data name=\"Plain\"><value>Preserved</value></data><data name=\"invalid-key\"><value>{name@string}</value></data></root>",
+    InvalidKeyHandling = InvalidKeyHandling.Ignore
+)]
+internal static class IgnoredIdentifierTexts { }

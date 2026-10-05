@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Xml;
 using Metalama.Framework.Aspects;
 using Metalama.Framework.Code;
@@ -44,12 +45,35 @@ internal static class ResxAccessImplementation
         "Invalid ExpectedCultures"
     );
 
+    private static readonly DiagnosticDefinition<(string Key, string Resource)> InvalidIdentifier =
+        new(
+            "TRESX006",
+            Severity.Warning,
+            "Resource Key '{0}' in '{1}' cannot become a C# method identifier; its members are omitted.",
+            "Invalid Resource Key identifier"
+        );
+
+    private static readonly DiagnosticDefinition<string> MemberCollision = new(
+        "TRESX007",
+        Severity.Error,
+        "Resource Access member collision: {0}",
+        "Resource Access member collision"
+    );
+
+    private static readonly DiagnosticDefinition<int> InvalidIdentifierPolicy = new(
+        "TRESX008",
+        Severity.Error,
+        "InvalidKeyHandling value '{0}' is unsupported. Specify Warn, Ignore, or Normalize.",
+        "Invalid Resource Key identifier policy"
+    );
+
     public static void Build(
         IAspectBuilder<INamedType> builder,
         string referenceResource,
         string? projectPath,
         string? resourceMap,
-        string[]? expectedCultures = null
+        string[]? expectedCultures = null,
+        InvalidKeyHandling invalidKeyHandling = InvalidKeyHandling.Warn
     )
     {
         for (var type = builder.Target; type is not null; type = type.DeclaringType)
@@ -74,6 +98,40 @@ internal static class ResxAccessImplementation
                 resourceMap,
                 expectedCultures
             );
+            if (
+                invalidKeyHandling != InvalidKeyHandling.Warn
+                && invalidKeyHandling != InvalidKeyHandling.Ignore
+                && invalidKeyHandling != InvalidKeyHandling.Normalize
+            )
+            {
+                builder.Diagnostics.Report(
+                    InvalidIdentifierPolicy.WithArguments((int)invalidKeyHandling)
+                );
+                return;
+            }
+            var identifiers = AssignIdentifiers(resource.Keys, invalidKeyHandling);
+            foreach (var key in resource.Keys.OrderBy(key => key, StringComparer.Ordinal))
+            {
+                if (!identifiers.ContainsKey(key) && invalidKeyHandling == InvalidKeyHandling.Warn)
+                {
+                    builder.Diagnostics.Report(
+                        InvalidIdentifier.WithArguments(
+                            (PlaceholderContract.DescribeIdentifier(key), referenceResource)
+                        )
+                    );
+                }
+            }
+            if (
+                HasMemberCollisions(
+                    builder,
+                    referenceResource,
+                    identifiers,
+                    resource.PlaceholderContracts
+                )
+            )
+            {
+                return;
+            }
             var adviser = builder.WithTemplateProvider(
                 new GenerateResxAccessAttribute(referenceResource)
             );
@@ -83,23 +141,26 @@ internal static class ResxAccessImplementation
                     tags: new { ManifestBaseName = resource.ManifestBaseName }
                 )
                 .Declaration;
-            foreach (var key in resource.Keys)
+            foreach (var key in resource.Keys.OrderBy(key => key, StringComparer.Ordinal))
             {
-                if (!ReferenceResourceReader.IsResourceKeyIdentifier(key))
+                if (!identifiers.TryGetValue(key, out var identifier))
                 {
                     continue;
                 }
 
+                // C# ignores formatting characters, including when resolving consumer calls.
+                var memberName = IdentifierIdentity(identifier);
+
                 var cultureMethod = adviser
                     .IntroduceMethod(
                         nameof(GenerateResxAccessAttribute.RawTextWithCulture),
-                        buildMethod: method => method.Name = key,
+                        buildMethod: method => method.Name = memberName,
                         args: new { key, resourceManagerField }
                     )
                     .Declaration;
                 adviser.IntroduceMethod(
                     nameof(GenerateResxAccessAttribute.RawText),
-                    buildMethod: method => method.Name = key,
+                    buildMethod: method => method.Name = memberName,
                     args: new { cultureMethod }
                 );
                 if (
@@ -114,7 +175,7 @@ internal static class ResxAccessImplementation
                             nameof(GenerateResxAccessAttribute.FormattedText),
                             buildMethod: method =>
                             {
-                                method.Name = "Format" + key;
+                                method.Name = "Format" + memberName;
                                 foreach (var argument in contract.Arguments)
                                 {
                                     var type = TypeFactory.GetType(argument.Type);
@@ -171,5 +232,114 @@ internal static class ResxAccessImplementation
                 )
             );
         }
+    }
+
+    private static Dictionary<string, string> AssignIdentifiers(
+        IEnumerable<string> keys,
+        InvalidKeyHandling invalidKeyHandling
+    )
+    {
+        var identifiers = keys.Where(ReferenceResourceReader.IsResourceKeyIdentifier)
+            .ToDictionary(key => key, key => key, StringComparer.Ordinal);
+        if (invalidKeyHandling != InvalidKeyHandling.Normalize)
+        {
+            return identifiers;
+        }
+
+        var reserved = new HashSet<string>(
+            identifiers.Values.Select(IdentifierIdentity),
+            StringComparer.Ordinal
+        );
+        foreach (
+            var key in keys.Where(key => !identifiers.ContainsKey(key))
+                .OrderBy(key => key, StringComparer.Ordinal)
+        )
+        {
+            var normalized = Regex.Replace(
+                key,
+                @"[^_\p{L}\p{Nl}\p{Nd}\p{Pc}\p{Mn}\p{Mc}\p{Cf}]",
+                "_"
+            );
+            normalized = Regex.Replace(normalized, @"\A[^_\p{L}\p{Nl}]", "_");
+            var identifier = normalized;
+            for (var suffix = 2; !reserved.Add(IdentifierIdentity(identifier)); suffix++)
+            {
+                identifier = normalized + "_" + suffix.ToString(CultureInfo.InvariantCulture);
+            }
+            identifiers.Add(key, identifier);
+        }
+        return identifiers;
+    }
+
+    private static string IdentifierIdentity(string identifier) =>
+        Regex.Replace(identifier, @"\p{Cf}", "");
+
+    private static bool HasMemberCollisions(
+        IAspectBuilder<INamedType> builder,
+        string referenceResource,
+        Dictionary<string, string> identifiers,
+        Dictionary<string, PlaceholderContract> contracts
+    )
+    {
+        var target = builder.Target;
+        var existing = new HashSet<string>(
+            target
+                .Methods.Select(member => member.Name)
+                .Concat(target.FieldsAndProperties.Select(member => member.Name))
+                .Concat(target.Events.Select(member => member.Name))
+                .Concat(target.Types.Select(member => member.Name))
+                .Append(target.Name)
+                .Select(IdentifierIdentity),
+            StringComparer.Ordinal
+        );
+        var collision = false;
+        if (existing.Contains("__resxResourceManager"))
+        {
+            builder.Diagnostics.Report(
+                MemberCollision.WithArguments(
+                    $"Generated ResourceManager field '__resxResourceManager' in '{referenceResource}' collides with an existing target-class member."
+                )
+            );
+            collision = true;
+        }
+        var families = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["__resxResourceManager"] = "the generated ResourceManager field",
+        };
+        foreach (var entry in identifiers.OrderBy(entry => entry.Key, StringComparer.Ordinal))
+        {
+            var key = entry.Key;
+            var identifier = entry.Value;
+            var names = new List<string> { identifier };
+            if (contracts[key].Arguments.Length > 0)
+            {
+                names.Add("Format" + identifier);
+            }
+            foreach (var name in names)
+            {
+                var identity = IdentifierIdentity(name);
+                var conflict =
+                    existing.Contains(identity) ? "an existing target-class member"
+                    : families.TryGetValue(identity, out var family) ? family
+                    : null;
+                if (conflict is not null)
+                {
+                    builder.Diagnostics.Report(
+                        MemberCollision.WithArguments(
+                            $"Resource Key '{PlaceholderContract.DescribeIdentifier(key)}' in '{referenceResource}' generates member '{PlaceholderContract.DescribeIdentifier(name)}', which collides with {conflict}."
+                        )
+                    );
+                    collision = true;
+                }
+                else
+                {
+                    families.Add(
+                        identity,
+                        $"the member family for Resource Key '{PlaceholderContract.DescribeIdentifier(key)}'"
+                    );
+                }
+            }
+        }
+        return collision;
     }
 }

@@ -47,6 +47,7 @@ public sealed class ConsumerDiagnosticsFixture
         IndexedPlaceholderConsumerTests.WriteMalformedPlaceholders(diagnostics);
         IndexedPlaceholderConsumerTests.WriteChangedPlaceholderContracts(diagnostics);
         NamedPlaceholderConsumerTests.WriteInvalidNamedPlaceholders(diagnostics);
+        ResourceKeyIdentifierConsumerTests.WriteIdentifierDiagnostics(diagnostics);
         malformedResource.Write("Resources/Labels.resx", "<root><data>");
 
         // Exactly two isolated projects; neither builds or restores the shared library.
