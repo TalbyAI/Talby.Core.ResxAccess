@@ -17,9 +17,9 @@ function Get-Peak([object[]] $Intervals)
     }) | Sort-Object Time, Change
     $active = 0
     $peak = 0
-    foreach ($event in $events)
+    foreach ($change in $events)
     {
-        $active += $event.Change
+        $active += $change.Change
         $peak = [Math]::Max($peak, $active)
     }
     return $peak

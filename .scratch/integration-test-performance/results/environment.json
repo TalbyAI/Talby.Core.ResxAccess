@@ -5,8 +5,8 @@
   "OS": "Microsoft Windows NT 10.0.26200.0",
   "Architecture": "X64",
   "LogicalProcessors": 20,
-  "NuGetPackages": "C:\\Users\\iskan\\.nuget\\packages",
-  "ConsumerWorkingDirectory": "C:\\Users\\iskan\\AppData\\Local\\Temp\\",
+  "NuGetPackages": "%USERPROFILE%\\.nuget\\packages",
+  "ConsumerWorkingDirectory": "%TEMP%\\",
   "Configuration": "Release",
   "TimedCommandLogging": "normal/TRX for tests; minimal for solution builds; quiet for child consumer builds"
 }
