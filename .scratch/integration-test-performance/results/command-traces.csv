@@ -1,0 +1,7 @@
+"Comparison","Variant","Commands","BuildCommands","DesignTimeCommands","RuntimeCommands","FreshConsumers","SubsequentBuilds","FirstBuildsSkippingRestore","SubsequentBuildsWithRestore","BuildCommandsNoRestore","PeakIndependentHistories","PeakBuildCommands"
+"A","baseline","70","36","7","27","12","24","0","24","0","1","2"
+"A","A","70","36","7","27","12","24","0","24","0","2","2"
+"B","baseline","70","36","7","27","12","24","0","24","0","1","2"
+"B","B","70","36","7","27","12","24","0","0","24","1","2"
+"AB","baseline","70","36","7","27","12","24","0","24","0","1","2"
+"AB","AB","70","36","7","27","12","24","0","0","24","2","3"

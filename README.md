@@ -259,6 +259,24 @@ The solution contains three test projects:
 - `Talby.Core.ResxAccess.IntegrationTests`: 35 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
 - `Talby.Core.ResxAccess.AspectTests`: 12 dedicated Metalama snapshot tests.
 
+### Integration test scheduling
+
+IntegrationTests uses at most two concurrent xUnit collection workers.
+Each incremental consumer history has its own Fact class and collection;
+mutations, builds and runtime checks within a history remain sequential.
+DesignTime uses a separate collection. The five diagnostic classes retain
+one shared collection and one lazy ConsumerDiagnosticsFixture.
+
+Temporary consumers use isolated directories and reuse library outputs
+without modifying them. The fixture's two builds can overlap another history,
+so the worker limit is not a global two-process SDK limit.
+The six changed identities are in the
+[coverage map](.scratch/integration-test-performance/coverage-map.md).
+
+Fast/full project selection stays unchanged. The
+[performance comparison](.scratch/integration-test-performance/comparison.md)
+records local experimental results, not CI timing guarantees.
+
 The [testing criterion](docs/agents/testing.md) defines test placement,
 compatible diagnostic grouping, assertion preservation, negative controls and
 performance measurements. `ResourceValidationDiagnostics` groups 24 named
@@ -274,7 +292,7 @@ members, original-key lookup and valid-name reservation.
 `ResourceKeyIdentifierDiagnostics` groups 13 named cases for existing/generated
 member collisions and validation of entries omitted by Warn or Ignore.
 
-The integration test classes share an xUnit collection fixture that caches one
+The five diagnostic classes share an xUnit collection fixture that caches one
 build for twelve compatible diagnostic tests. Malformed XML uses a separate
 consumer project because SDK resource generation fails before aspects execute.
 The fixture starts these two builds concurrently, with isolated consumer bin/obj
@@ -392,7 +410,7 @@ refactor preserved every test identity. Named Placeholder coverage brings the
 inventory to 30 fast / 53 full at that point. Resource Key identifier policies
 add two AspectTests and five IntegrationTests, bringing that inventory to
 32 fast / 60 full. Incremental build coverage adds six IntegrationTests, bringing
-the current inventory to 32 fast / 66 full. Grouped assertions
+that inventory to 32 fast / 66 full at that point. Grouped assertions
 require the target source file, diagnostic code, and expected message on the
 same output line. Malformed XML is diagnosed by SDK resource generation before
 the aspect executes (`MSB3103`). The shared builds start lazily: runtime-only

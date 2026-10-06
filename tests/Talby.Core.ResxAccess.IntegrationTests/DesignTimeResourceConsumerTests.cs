@@ -3,7 +3,7 @@ using System.Text.Json;
 namespace Talby.Core.ResxAccess.IntegrationTests;
 
 [Trait("Category", "Integration")]
-[Collection("SDK consumer builds")]
+[Collection("Design-time consumer builds")]
 public class DesignTimeResourceConsumerTests
 {
     [Fact]
