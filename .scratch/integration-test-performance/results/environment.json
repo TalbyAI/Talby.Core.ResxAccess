@@ -1,0 +1,12 @@
+{
+  "RecordedUtc": "2026-10-05T21:14:51.6417694Z",
+  "SourceCommit": "71f1ab38f59866b35fa685cc58b031c80a6d09b0",
+  "SDK": "10.0.401",
+  "OS": "Microsoft Windows NT 10.0.26200.0",
+  "Architecture": "X64",
+  "LogicalProcessors": 20,
+  "NuGetPackages": "%USERPROFILE%\\.nuget\\packages",
+  "ConsumerWorkingDirectory": "%TEMP%\\",
+  "Configuration": "Release",
+  "TimedCommandLogging": "normal/TRX for tests; minimal for solution builds; quiet for child consumer builds"
+}

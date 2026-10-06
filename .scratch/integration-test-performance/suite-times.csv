@@ -1,0 +1,5 @@
+"Sample","Warmup","Seconds","ExitCode","Passed","OverlappingTestIntervals","IncrementalAndDesignTimeSeconds","IncrementalAndDesignTimePercent"
+"warmup","True","95.1516993","0","36","0","77.5464656","81.49772013582945"
+"sample-1","False","102.7111446","0","36","0","85.00565710000001","82.76186331195846"
+"sample-2","False","105.2995799","0","36","0","85.99899719999999","81.67078850805558"
+"sample-3","False","103.1464287","0","36","0","82.95786670000001","80.42727968922884"

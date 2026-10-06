@@ -1,0 +1,17 @@
+{
+  "VerifiedUtc": "2026-10-06T08:54:08.0049162Z",
+  "Observations": 188,
+  "Stages": {
+    "resume-warmup": 2,
+    "warmup": 30,
+    "clean": 6,
+    "paired": 150
+  },
+  "PassedIdentityObservations": 8204,
+  "FrozenSourceHashes": 714,
+  "LibraryFilesPerObservation": 24,
+  "NonzeroTimingExitCodes": 0,
+  "OriginalSourceDiff": "empty",
+  "StrictSummary": "passed",
+  "TraceVerification": "passed"
+}

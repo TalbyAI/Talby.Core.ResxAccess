@@ -1,0 +1,9 @@
+Class,ConsumerBuilds,DesignTimeBuilds,ChildRuntimeInvocations,Notes
+IncrementalBuildConsumerTests,29,0,20,Six sequential mutation histories; counts 4/5/3/4/7/6
+DesignTimeResourceConsumerTests,1,7,0,One initial build followed by seven compiler-input queries
+DocumentationConsumerTests,1,0,1,Compiles the documented consumer example
+ResourceKeyIdentifierConsumerTests,3,0,2,Normalization once and Warn/Ignore twice
+NamedPlaceholderConsumerTests,1,0,0,Compiler enforcement of generated signatures
+ConsumerDiagnosticsFixture,2,0,0,Two concurrent lazy builds shared by thirteen diagnostic tests
+Precompiled ConsumerFixture runtime checks,0,0,5,Three Raw Text invocations and two Localized Resource invocations
+Total,37,7,28,Seventy-two child dotnet commands; the outer no-build/no-restore flags do not propagate

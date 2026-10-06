@@ -1,8 +1,6 @@
 namespace Talby.Core.ResxAccess.IntegrationTests;
 
-[Trait("Category", "Integration")]
-[Collection("SDK consumer builds")]
-public class IncrementalBuildConsumerTests
+internal static class IncrementalBuildConsumerHistories
 {
     // Metalama's build signal is touched on every build. Exclude it from compiler inputs
     // so a successful regression proves resource dependencies, not incidental recompilation.
@@ -27,8 +25,7 @@ public class IncrementalBuildConsumerTests
         public static partial class Texts { }
         """;
 
-    [Fact]
-    public async Task RefreshesRawAndFormattedTextAfterReferenceAndLocalizedEdits()
+    public static async Task RefreshesRawAndFormattedTextAfterReferenceAndLocalizedEdits()
     {
         using var project = new ConsumerProject(Source, projectTargets: IsolateResourceInputs);
         project.Write("Resources/Texts.resx", Resource("Hello {name@string}"));
@@ -59,8 +56,7 @@ public class IncrementalBuildConsumerTests
         );
     }
 
-    [Fact]
-    public async Task RefreshesDiscoveryValidationAndFallbackAfterResourceAdditionsAndRemovals()
+    public static async Task RefreshesDiscoveryValidationAndFallbackAfterResourceAdditionsAndRemovals()
     {
         using var project = new ConsumerProject(
             Source.Replace(
@@ -101,8 +97,7 @@ public class IncrementalBuildConsumerTests
         );
     }
 
-    [Fact]
-    public async Task RefreshesExpectedCultureDiagnosticsAfterRemovalAndRestoration()
+    public static async Task RefreshesExpectedCultureDiagnosticsAfterRemovalAndRestoration()
     {
         using var project = new ConsumerProject(
             Source.Replace(
@@ -130,8 +125,7 @@ public class IncrementalBuildConsumerTests
         );
     }
 
-    [Fact]
-    public async Task DetectsAssociatedResourcesExcludedFromSdkEmbedding()
+    public static async Task DetectsAssociatedResourcesExcludedFromSdkEmbedding()
     {
         using var project = new ConsumerProject(
             Source,
@@ -162,8 +156,7 @@ public class IncrementalBuildConsumerTests
         );
     }
 
-    [Fact]
-    public async Task RefreshesGeneratedKeysSignaturesAndPlaceholderDiagnostics()
+    public static async Task RefreshesGeneratedKeysSignaturesAndPlaceholderDiagnostics()
     {
         const string source = """
             using System.Globalization;
@@ -228,8 +221,7 @@ public class IncrementalBuildConsumerTests
         await AssertBuildAndOutput(project, changedOutput.Replace("Welcome=", "Renamed="));
     }
 
-    [Fact]
-    public async Task RefreshesValidationForOmittedKeysWhileIgnoringUnrelatedResources()
+    public static async Task RefreshesValidationForOmittedKeysWhileIgnoringUnrelatedResources()
     {
         using var project = new ConsumerProject(Source, projectTargets: IsolateResourceInputs);
         var reference = Resource("Hello {name@string}")

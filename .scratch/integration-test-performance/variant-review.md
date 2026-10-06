@@ -1,0 +1,22 @@
+# Generated integration experiment variants review
+
+Reviewed on 2026-10-05. Scope: `prototypes/integration-test-performance/New-Variants.ps1` and the requested generated files under `test-results/integration-exploration-c891a32c`. No builds, tests, or timing commands were run. `New-Variants.ps1` passed PowerShell parser-only validation.
+
+## Validation required before accepting Option B
+
+`New-Variants.ps1:267-274` adds an unconditional `AfterTargets="Restore"` target that writes the restore marker. Generated B then treats marker existence as proof of success at `ConsumerProject.cs:115-120`, even when `Run` returned a nonzero build exit code. This correctly allows a successful restore followed by an expected compiler failure to be reused, but static inspection does not establish that a failed Restore target cannot also run the `AfterTargets` hook and leave the marker. The official target-order documentation says `AfterTargets` runs after the target executes or is skipped, without a success condition; whether a failed Restore writes this marker remains unconfirmed. Root's planned NU1101 failure followed by a second build is the right validation. If the marker appears after restore failure, gate it on a reliable restore-success signal before using B measurements. [MSBuild target build order](https://learn.microsoft.com/en-us/visualstudio/msbuild/target-build-order).
+
+## Checks that passed
+
+- The generator copies a commit archive into four separate trees, rejects existing destinations, applies trace instrumentation uniformly, writes per-tree identity and coverage verification files, and records hashes. It normalizes CRLF/CR to LF before replacements and hashing. The parser reported no errors.
+- The six A wrapper facts match the six expected history names. Each wrapper is in its own collection and delegates to one static history method. `[assembly: CollectionBehavior(MaxParallelThreads = 2)]` caps concurrent xUnit collection workers at two. With the diagnostic fixture's internal pair, up to three child builds can overlap, as anticipated.
+- The existing `SDK consumer builds` definition still uses its single `ConsumerDiagnosticsFixture`; the added `Design-time consumer builds` collection is separate. After normalizing line endings and reverting only its collection name, the DesignTime test file matches the baseline content.
+- All four generated coverage reports say `matchesOriginal: true`; the normalized source and history hashes match (`dc8f9fc4b7602ae168cf980c70587f72269e6699e3748a36f7eae0c0553bac85`). This verifies the six history bodies and assertions survived A's declaration-only transformation.
+- In the six histories, mutations are source/resource inputs (`.resx` writes and removals); they do not modify project files, props, targets, or package inputs. B allows the first implicit restore, adds `--no-restore` only when the marker and unchanged project fingerprint agree, and invalidates the marker when `ConsumerProject.Write` changes recognized project/restore inputs. This is scoped to the known frozen dependency graph.
+- Trace instrumentation is present in baseline, A, B, and AB and returns without writing when `TALBY_CONSUMER_TRACE_DIR` is unset. The comparison harness sets that variable for warm-ups and removes it for paired and clean measurements, so measured runs do not emit trace files.
+
+## Restore-marker control resolution
+
+The earlier restore-marker concern is resolved for the recorded .NET SDK 10.0.401 environment. The ten controls in `.scratch/integration-test-performance/results/restore-controls.csv` all passed. In particular, the missing-package RestoreTask failure from the empty local feed and its repeated build both had `ActualSkipRestore=False` and exit code 1; after correcting the project, the build again used implicit restore (`ActualSkipRestore=False`) and passed. The accompanying `restore-control-v2-trace/*.json` records those command arguments and exit codes. A compiler failure after successful restore remained eligible for `--no-restore` on the next build, as intended.
+
+This result is limited to the recorded SDK and the frozen graph used by these controls. External `.props` or `.targets` changes made outside `ConsumerProject.Write` are not fingerprinted or invalidated by this helper and remain unsupported; the current frozen histories do not make those changes. No .NET commands were run during this follow-up review.
