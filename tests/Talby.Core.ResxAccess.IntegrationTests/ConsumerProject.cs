@@ -121,7 +121,7 @@ internal sealed class ConsumerProject : IDisposable
         return (process.ExitCode, await output + await error);
     }
 
-    private static string FindRepository()
+    internal static string FindRepository()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (

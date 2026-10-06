@@ -1,189 +1,40 @@
 # Talby.Core.ResxAccess
 
-Metalama generates Raw Text and formatting methods on a consumer-declared, non-generic
-static class. Builds do not require a `partial` declaration. Metalama 2026.1.28
-requires `partial` for IDE recognition of introduced members (`LAMA0048`).
+Metalama generates Raw Text and formatting methods on a consumer-declared,
+non-generic static class. The Reference Resource defines the API and every
+Localized Resource must preserve its case-sensitive Resource Keys and Placeholder
+Contracts. Ordinary builds do not require `partial`.
 
 ```csharp
-using System.Globalization;
 using Talby.Core.ResxAccess;
 
-[GenerateResxAccess("Resources/Labels.resx", ExpectedCultures = new[] { "es", "fr" })]
+[GenerateResxAccess(
+    "Resources/Labels.resx",
+    ExpectedCultures = new[] { "es" },
+    InvalidKeyHandling = InvalidKeyHandling.Normalize)]
 internal static class Texts
 {
 }
-
-// For the Resource Key "Welcome":
-// Texts.Welcome();
-// Texts.Welcome(CultureInfo.GetCultureInfo("es"));
 ```
 
-Each representable Resource Key receives two public static methods returning
-`string`. The parameterless method selects `CurrentUICulture`; the other requires
-a non-null `CultureInfo resourceCulture`. Raw Text is returned unchanged,
-including Formatting Placeholders and whitespace. Lookup uses standard .NET
-parent-culture and Reference Resource fallback. The target class retains its
-name, namespace, and accessibility.
+For a `Welcome` Resource Key with Translation `Hello {name@string}!`, use
+`Texts.Welcome()` for Raw Text or `Texts.FormatWelcome("Ada")` for Formatted Text.
+Resource Culture defaults to `CurrentUICulture`; Formatting Culture defaults
+independently to `CurrentCulture`. Explicit culture overloads are also generated.
 
-Reference Resource paths are resolved relative to the consumer project directory.
-Resources must be text `.resx` files embedded using standard SDK conventions.
-The manifest base name comes from SDK metadata, including resource location,
-`RootNamespace`, and implicit or explicit `DependentUpon` C# type association.
-Explicit `LogicalName`, explicit `ManifestResourceName`, and linked resources
-are rejected. Missing runtime resources throw descriptive `InvalidOperationException`
-instances; missing manifest or satellite exceptions are retained as inner exceptions.
+Read the [Resource Access consumer guide](docs/resource-access.md) for a complete,
+compiled example, placeholder syntax and Argument Types, Translation validation,
+identifier policies, diagnostics, supported SDK embedding and incremental builds.
+Source consumers must import the library's targets in addition to their
+`ProjectReference`; the guide includes the project setup. Packages built from the
+library include the transitive targets automatically.
 
-Localized Resources are discovered only in the Reference Resource's directory,
-using its base name followed by a recognized culture suffix (for example,
-`Labels.es.resx`). Every discovered Localized Resource must contain exactly the
-Reference Resource's case-sensitive Resource Keys and use standard SDK satellite
-embedding. Duplicate keys and non-text entries are rejected in both kinds of
-resource, including keys that do not receive generated methods. A Resource Set
-cannot contain multiple Localized Resources for the same Resource Culture,
-including filenames differing only in casing on a case-sensitive file system. Empty and
-whitespace-only text remains valid when its Placeholder Contract permits it and is returned unchanged.
-
-Localized Resource filename suffixes must use canonical Resource Culture casing
-or its lowercase form (for example, `es-MX` or `es-mx`). Other spellings such as
-`ES` or `Es-MX` receive `TRESX004`, because standard runtime satellite probing
-on Linux and macOS requires canonical or lowercase directory names. See
-[satellite assembly loading](https://learn.microsoft.com/en-us/dotnet/core/dependency-loading/loading-resources).
-
-`ExpectedCultures` is optional. When supplied, each name must identify a non-empty
-Resource Culture with an associated Localized Resource. Culture names are matched
-without regard to case. The list supplements discovery: cultures outside it are
-still validated. Parent-culture and Reference Resource fallback apply to requested
-cultures without their own resource; they never excuse an incomplete resource
-that is present.
-
-`TRESX004` reports invalid Localized Resources; `TRESX005` reports invalid or
-missing Expected Cultures. Verification of incremental build and IDE refresh
-belongs to dependent issues.
-
-`InvalidKeyHandling` controls Resource Keys that cannot become C# method identifiers:
-
-- `Warn` (the default) omits their Raw Text and formatting methods and reports `TRESX006` warnings.
-- `Ignore` omits the same methods without identifier warnings.
-- `Normalize` replaces invalid identifier characters with underscores. A character invalid at the start is also replaced, so `1Text` becomes `_Text`.
-
-All policies validate the complete Resource Set and every Placeholder Contract,
-including omitted entries. Valid identifiers are preserved; C# keywords are
-escaped and can be called with syntax such as `Texts.@class()`.
-
-```csharp
-[GenerateResxAccess("Resources/Labels.resx", InvalidKeyHandling = InvalidKeyHandling.Normalize)]
-internal static class NormalizedTexts
-{
-}
-
-// Resource Key "has-dash": NormalizedTexts.has_dash();
-// With placeholders: NormalizedTexts.Formathas_dash(arguments);
-```
-
-Normalization reserves all valid Resource Key identifiers first, then processes
-invalid keys in ordinal order. Collisions receive `_2`, `_3`, and subsequent
-suffixes. For example, valid `a_b` and `a_b_2` reserve those names; `a b`, `a-b`,
-and `a.b` become `a_b_3`, `a_b_4`, and `a_b_5` regardless of resource entry order.
-Lookup always uses the original Resource Key and preserves its Translation.
-C# identifier comparisons ignore Unicode formatting characters.
-
-`TRESX007` rejects collisions with existing target-class members, the class name,
-the generated ResourceManager field, or other generated Raw Text and formatting
-member families. Normalization does not rename these conflicting families.
-Unsupported `InvalidKeyHandling` values receive `TRESX008` instead of selecting
-an omission policy.
-
-For a Reference Resource Translation such as `"{2} / {0:N2}"`, the generated API is:
-
-```csharp
-Texts.FormatSummary(arg0, arg2);
-Texts.FormatSummary(arg0, arg2, resourceCulture);
-Texts.FormatSummary(arg0, arg2, resourceCulture, formattingCulture);
-```
-
-The Resource Key in this example is `Summary`. Only Indexed Placeholder identities
-actually used in the Reference Resource become parameters, in numeric order;
-`arg0` and `arg2` are required `object?` arguments. Formatting Culture defaults to
-`CurrentCulture` independently of Resource Culture, even when Resource Culture is
-explicit. Explicit cultures must be non-null. There is no formatting-culture-only
-overload. Keys without Formatting Placeholders retain only Raw Text methods.
-
-Named Placeholders use `{name[@type][,alignment][:format]}`. Supported explicit
-Argument Types are `string`, `bool`, `int`, `long`, `double`, `decimal`, `DateTime`,
-`DateTimeOffset`, and `Guid`, each with an optional nullable `?` suffix. Untyped
-Named Placeholders use `object?`. Explicit `string` and `string?` retain different
-compiler annotations; non-nullable reference arguments add no runtime null checks.
-Nullable arguments remain required parameters and required placeholder identities.
-
-For `{name@string} {2} {0}`, `FormatSummary` accepts `string name`, `object? arg0`,
-and `object? arg2`, followed by the same optional culture overloads shown above.
-Distinct Named parameters appear first in order of first appearance in the
-Reference Resource; Indexed parameters follow in numeric order. Repeated
-occurrences share one parameter. An explicit declaration supplies the Argument
-Type even when another occurrence omits it; conflicting explicit declarations
-are errors. Prefer one placeholder style per Resource Key for readability;
-mixed styles are supported.
-
-Named argument identifiers must be valid C# identifiers. Keywords are escaped in
-generated C# without changing their identities. Collisions with other parameters,
-including Indexed parameter names, `resourceCulture`, and `formattingCulture`,
-are compilation errors; arguments are never silently renamed.
-
-Validated Translations are converted to composite formats at compile time.
-Each formatting call allocates one argument-array slot per public argument;
-Indexed identity gaps do not allocate additional slots.
-
-Every Translation must use exactly the Reference Resource's Named and Indexed
-identities, including entries omitted because their Resource Keys are invalid
-identifiers. Translations may reorder or repeat identities and change alignment or
-Argument Formats. Translations may omit type declarations; any explicit declaration
-must match the Reference Resource's Argument Type and nullability. Standard composite formatting supports null arguments, alignment,
-formats, and escaped braces (`{{` and `}}`); standard formatting failures propagate.
-Malformed syntax receives `TRESX001` in a Reference Resource or `TRESX004` in a
-Localized Resource. Raw Text remains unchanged.
-
-## Consumer build integration
-
-The NuGet package includes `buildTransitive/Talby.Core.ResxAccess.targets`, imported
-automatically for package consumers. It records the SDK's effective resource names
-and exposes the resource map to the aspect through a compiler-visible property.
-
-When referencing the source library with `ProjectReference`, also import its targets
-in the consumer project (adjust paths to your layout):
-
-```xml
-<ItemGroup>
-  <ProjectReference Include="../src/Talby.Core.ResxAccess/Talby.Core.ResxAccess.csproj" />
-</ItemGroup>
-<Import Project="../src/Talby.Core.ResxAccess/buildTransitive/Talby.Core.ResxAccess.targets" />
-```
-
-The targets register project `.resx` files and the resource map as compiler
-`AdditionalFiles`. Content edits invalidate compilation; the map also records
-discovered paths so additions and removals invalidate generation and validation.
-Discovery includes associated resources excluded from SDK embedding, which must
-still fail validation. The map is written only when its contents change.
-Ordinary incremental consumer builds refresh Raw Text, Formatted Text, generated
-signatures and diagnostics without C# edits or cleaning. These are build-level
-guarantees. The unmet IDE integration requirements are deferred;
-[issue 07](.scratch/resource-access/issues/07-refresh-ide-resource-access.md)
-was resolved by explicit user decision to continue subsequent work, without
-establishing automatic IDE refresh.
-
-Design-time builds prepare SDK resource names, watch resource content through
-`AdditionalDesignTimeBuildInput`, and write a stable generated C# dependency under
-`obj/`. The aspect reads that declaration before validation so Metalama can track
-changes even for invalid Resource Sets. The dependency includes content hashes
-and discovery membership and is absent from ordinary compilation inputs.
-
-For VS Code, enable C# analyzer diagnostics and use `partial` consumer classes.
-The repository's `.vscode/settings.json` enables analyzer and compiler diagnostics
-for the full solution, following [Metalama's VS Code configuration](https://doc.metalama.net/conceptual/using/ide/vs-code).
-Automatic resource refresh is **not established** in the installed VS Code setup:
-C# Dev Kit fails project loading, and the standalone C# language server leaves
-the generated API stale after a resource edit. See the
-[IDE refresh evidence](.scratch/resource-access/results/07-ide-refresh.md)
-for versions, observed failures, the reproducible probe and human verification steps.
+Automatic IDE resource refresh is not verified. The recorded VS Code setup has
+C# Dev Kit project-loading failures, requires `partial` for initial standalone
+C# recognition, and leaves the API stale after resource edits. These technical
+requirements were explicitly deferred. See the guide's
+[IDE evidence and deferred requirements](docs/resource-access.md#ide-evidence-and-deferred-requirements)
+for the limitations and reproducible evidence.
 
 ## Formatting and staged-file checks
 
@@ -229,7 +80,7 @@ Both tools exclude the top-level `prototypes/` directory, dependencies and
 generated output (`bin/`, `obj/`, `artifacts/`, `test-results/`). CSharpier also
 excludes `.resx` and Metalama output snapshots (`*.t.cs`, `*.i.cs`), whose format
 is owned by the snapshot runner. Keep all future prototypes under root
-`prototypes/`; no prototype directory or implementation is currently required.
+`prototypes/`; the IDE feasibility probe is kept there.
 Repository Markdown includes `README.md`, `AGENTS.md`, `CONTEXT.md`, `docs/` and
 the local issues/specifications in `.scratch/`.
 
@@ -256,7 +107,7 @@ dotnet test Talby.Core.ResxAccess.slnx --configuration Release --no-build --no-r
 The solution contains three test projects:
 
 - `Talby.Core.ResxAccess.UnitTests`: 20 tests of Metalama setup and shared Reference Resource validation.
-- `Talby.Core.ResxAccess.IntegrationTests`: 35 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
+- `Talby.Core.ResxAccess.IntegrationTests`: 36 SDK consumer tests, with the `ConsumerProject` helper and a reference to ConsumerFixture.
 - `Talby.Core.ResxAccess.AspectTests`: 12 dedicated Metalama snapshot tests.
 
 The [testing criterion](docs/agents/testing.md) defines test placement,
