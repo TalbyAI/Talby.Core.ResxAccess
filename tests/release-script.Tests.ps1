@@ -38,6 +38,8 @@ foreach ($mode in @('Prepare', 'Website', 'Cli', 'Verify'))
     }
 }
 Assert-Rejected { Invoke-Native 'pwsh' @('-NoProfile', '-Command', 'exit 17') } 'exit code 17'
+# Clear the expected native failure before the GitHub Actions wrapper checks it.
+$global:LASTEXITCODE = 0
 
 $temporary = Join-Path $root "test-results/release-script/$([Guid]::NewGuid().ToString('N'))"
 $null = New-Item -ItemType Directory -Path $temporary
