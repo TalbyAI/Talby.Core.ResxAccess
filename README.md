@@ -63,6 +63,54 @@ IntegrationTests packs the Release library and verifies an isolated local-feed
 and Resource Culture fallback. An optional `TALBY_TEST_PACKAGE` environment variable
 selects an existing archive for the same checks.
 
+## Command recipes
+
+Install [just](https://just.systems/man/en/packages.html) and PowerShell 7 (`pwsh`)
+to use the root `justfile`. Recipes run from the repository root, including when
+invoked from a subdirectory. The .NET SDK, Node.js 24, Git and network prerequisites
+in the sections below still apply. The direct commands remain available without
+`just`.
+
+```powershell
+# List the available recipes.
+just
+
+# Restore solution dependencies, .NET tools, and npm tooling after cloning.
+just restore
+
+# Restore solution dependencies and build all projects in Release.
+just build
+
+# Build and run fast tests; these two commands are equivalent.
+just test
+just test fast
+
+# Build and run every solution test with TRX validation before merge.
+just test full
+
+# Use the formatting tools installed by just restore.
+just format
+just format-check
+
+# Build and pack a local archive into artifacts/nuget/.
+just pack
+
+# Inspect the release plan, then prepare the validated release archive.
+just release-plan
+just release
+```
+
+`build`, `test` and `pack` restore only solution dependencies; they do not repeat
+`.NET` tool restore or `npm ci`. Run `just restore` again after the tool manifest
+or npm lockfile changes. Formatting recipes require that tooling to be installed.
+Commands stop on failure and propagate the failing command's exit code.
+
+`pack` creates an archive without recording release validation evidence. Use
+`just release` (equivalent to `just release Prepare`) for formatting checks, full
+tests, exact archive validation and release evidence. The release wizard retains
+its interactive confirmations. See the [release recipes](docs/releasing.md#release-recipes)
+for publication modes and verification of the published package.
+
 ## Formatting and staged-file checks
 
 Install Node.js 24 with npm, alongside the .NET SDK specified below. Tooling is

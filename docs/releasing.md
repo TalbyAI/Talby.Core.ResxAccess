@@ -4,6 +4,42 @@ The first release is `Talby.Core.ResxAccess` `0.1.0-beta.1`, targeting `net10.0`
 licensed under MIT and attributed to TalbyAI. It is intended for existing projects
 and early adopters. The user performs the public upload after local validation.
 
+## Release recipes
+
+With [just](https://just.systems/man/en/packages.html) and PowerShell 7 installed,
+use these root `justfile` recipes to invoke the existing release wizard:
+
+```powershell
+# Inspect metadata, paths and stages without running them.
+just release-plan
+just release-plan Website
+just release-plan Cli
+just release-plan Verify
+
+# Prepare is the default: restore tools, check formatting, build, test and pack.
+just release
+just release Prepare
+
+# After review/merge, preparation at the clean public revision, and tag creation,
+# choose one publication path. The wizard retains its publisher confirmations.
+just release Website
+just release Cli
+
+# Verify an already published package using a fresh NuGet.org consumer.
+just release Verify
+```
+
+Both recipes accept `Prepare` (default), `Website`, `Cli` or `Verify` as their mode.
+`release-plan` adds the wizard's `-Plan` switch and never runs release stages.
+`release` passes through to the wizard without adding restore/build dependencies,
+so inspecting or verifying a release does not repeat preparation. Version and
+Package ID remain controlled by the library project XML.
+
+For a complete dependency setup use `just restore`; it restores the solution,
+.NET tools and npm tooling. `just pack` builds and produces a local `.nupkg`, but
+does not perform exact archive validation or record release evidence. Use
+`just release Prepare` to prepare an archive for publication.
+
 ## PowerShell release wizard
 
 Use PowerShell 7 from the repository root:
