@@ -90,7 +90,7 @@ internal sealed class ConsumerProject : IDisposable
             "-getItem:CscCommandLineArgs,AdditionalDesignTimeBuildInput"
         );
 
-    private static async Task<(int ExitCode, string Output)> Run(params string[] arguments)
+    internal static async Task<(int ExitCode, string Output)> Run(params string[] arguments)
     {
         var startInfo = new ProcessStartInfo("dotnet")
         {
