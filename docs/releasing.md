@@ -4,6 +4,69 @@ The first release is `Talby.Core.ResxAccess` `0.1.0-beta.1`, targeting `net10.0`
 licensed under MIT and attributed to TalbyAI. It is intended for existing projects
 and early adopters. The user performs the public upload after local validation.
 
+## PowerShell release wizard
+
+Use PowerShell 7 from the repository root:
+
+```powershell
+# Inspect the version, artifact paths, tag and stages without executing them.
+pwsh -NoProfile -File scripts/release.ps1 -Plan
+
+# Restore tooling, check formatting, build, run full tests, pack and validate.
+pwsh -NoProfile -File scripts/release.ps1 -Mode Prepare
+
+# After review/merge, repeat Prepare at the clean, publicly available revision.
+# Create and push the matching v<Version> tag, then choose one publication path.
+pwsh -NoProfile -File scripts/release.ps1 -Mode Website
+# Alternative: hidden scoped API key entry followed by dotnet nuget push.
+pwsh -NoProfile -File scripts/release.ps1 -Mode Cli
+
+# Retry verification after NuGet validation/indexing, without publishing again.
+pwsh -NoProfile -File scripts/release.ps1 -Mode Verify
+```
+
+`Prepare` is the default. The wizard reads `PackageId` and `Version` directly from
+the library `.csproj`; change its `<Version>` before preparing a new release.
+Optional `-Version 0.1.0-beta.1` asserts the intended version and fails if it differs
+from the XML. It never overrides the project or edits it. Before running stages,
+the wizard also checks evaluated MSBuild properties to reject imported or
+environment overrides that would produce a different package. Update versioned
+installation examples and release documentation when changing the version.
+
+Each stage displays progress, stops on command failure and asks for confirmation
+before replacing preparation evidence or publishing. `Prepare` produces the exact
+`.nupkg`, its `.sha256` and a `.release.json` record under `artifacts/nuget/`.
+The record contains the source revision, working tree state, archive size,
+checksum, validation time and exact archive TRX location. Previous checksum and
+validation evidence are removed when a new preparation attempt starts; replacement
+evidence is written only after formatting, full tests and exact archive tests pass.
+Use this record to update [the validation report](../.scratch/nuget-release/validation.md).
+
+Preparation allows pending changes for local review. Publication requires a clean
+working tree, an archive prepared at the current `HEAD`, the matching local tag,
+and publisher confirmation that review/merge, public source/tag availability and
+NuGet ownership checks are complete. It verifies both archive identity and
+checksum. The wizard leaves Git review, commits, merge and tag creation to the
+publisher. Website mode guides the upload and verification page; the publisher
+selects **Submit**. CLI mode reads the API key with hidden input, supplies it only
+through the process environment and removes it in `finally`; no key is persisted.
+Use a shell without existing `TALBY_TEST_PACKAGE` or `NUGET_API_KEY` overrides.
+
+After a successful submission, the wizard records a `.publication.json` with the
+URL, owner, version, source revision and checksum before waiting for indexing.
+An existing submission record prevents another preparation or upload of the same
+version; use `Verify` instead. Verification asks the publisher to confirm the public
+version and owner, then builds and runs the package README example using only
+NuGet.org, a fresh consumer and a fresh package cache on every attempt. It asserts
+Raw Text, Formatted Text, independent Formatting Culture, Spanish Resource Culture
+fallback and Reference Resource fallback. Generated artifacts remain ignored.
+
+The wizard's noninteractive validation checks run in CI and can be run locally:
+
+```powershell
+pwsh -NoProfile -File tests/release-script.Tests.ps1
+```
+
 ## Prepared artifact
 
 From the repository root, the package to upload is:
@@ -28,7 +91,8 @@ if ((Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash -ne $expectedHas
 ```
 
 If you change source, resources, metadata or the package README, rebuild, repack
-and repeat validation before replacing this checksum.
+and repeat validation before replacing this checksum. Then follow
+[Update the SHA-256 checksum](#update-the-sha-256-checksum) below.
 
 ## Rebuild and validate
 
@@ -60,8 +124,7 @@ feed. It checks automatic targets import, generated Raw Text and Formatted Text,
 Localized Resource satellite loading, independent Formatting Culture and Resource
 Culture fallback. Existing consumer, diagnostic and snapshot assertions remain.
 
-Validate the exact archive that you will upload and record its checksum only after
-the tests pass. `TALBY_TEST_PACKAGE` makes the fixture copy that archive into its
+Validate the exact archive that you will upload. `TALBY_TEST_PACKAGE` makes the fixture copy that archive into its
 isolated feed instead of packing another copy:
 
 ```powershell
@@ -73,13 +136,29 @@ $env:TALBY_TEST_PACKAGE = (Resolve-Path -LiteralPath $package).Path
 try {
     dotnet test tests/Talby.Core.ResxAccess.IntegrationTests/Talby.Core.ResxAccess.IntegrationTests.csproj --configuration Release --no-build --no-restore --filter FullyQualifiedName~NuGetPackageConsumerTests
     if ($LASTEXITCODE -ne 0) { throw 'Release archive validation failed.' }
-    (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash |
-        Set-Content -LiteralPath "$package.sha256" -Encoding ascii
 }
 finally {
     Remove-Item Env:TALBY_TEST_PACKAGE
 }
 ```
+
+### Update the SHA-256 checksum
+
+After repacking and successfully validating the exact archive above, run this
+command from the repository root to create or replace its adjacent `.nupkg.sha256`
+file:
+
+```powershell
+$package = 'artifacts/nuget/Talby.Core.ResxAccess.0.1.0-beta.1.nupkg'
+(Get-FileHash -LiteralPath $package -Algorithm SHA256 -ErrorAction Stop).Hash |
+    Set-Content -LiteralPath "$package.sha256" -Encoding ascii -ErrorAction Stop
+```
+
+Repeat this step whenever a new archive is packed and validated, including after
+review changes. Update the archive size, source revision, checksum and verification
+evidence in [the validation report](../.scratch/nuget-release/validation.md) to match
+the new artifact. The checksum identifies that exact file; it does not replace
+validation.
 
 Review the diff and retain the release changes on a working branch. Follow the
 repository's normal review/merge process, then record the published source revision

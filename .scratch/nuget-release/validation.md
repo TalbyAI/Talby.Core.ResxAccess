@@ -1,6 +1,8 @@
 # First NuGet release validation
 
 Validated on 2026-10-07 for the user-approved manual NuGet.org publication.
+Revalidated the archive repacked after review on the same date, and refreshed its
+checksum and the local PackageConsumer as approved by the user.
 
 ## Delivered archive
 
@@ -14,14 +16,14 @@ Validated on 2026-10-07 for the user-approved manual NuGet.org publication.
 | License | MIT expression, with included license text |
 | Metalama dependency | `Metalama.Framework` `2026.1.28` |
 | Archive | `artifacts/nuget/Talby.Core.ResxAccess.0.1.0-beta.1.nupkg` |
-| Size | 43,620 bytes |
-| Repository revision in manifest | `852adfcc2bf8f511ad99c1b36ee3a6ac6220b875` |
+| Size | 43,624 bytes |
+| Repository revision in manifest | `2819406c461099692bfb90c6eee78595e3cefddb` |
 | Working branch | `feature/nuget-first-release` |
 
 SHA-256 of the exact validated archive:
 
 ```text
-11A1344A1CA1320CFCA4ACF9CB7345C68F2D3FC4C2987C58BB3A2B3F4B7B324C
+3F5BFCFB6AF26A3E3AF49717F590A0213C55C15497C0E61AA88AA314AF133741
 ```
 
 The same hash is stored in the adjacent `.nupkg.sha256` file. The archive includes
@@ -43,11 +45,12 @@ Environment: .NET SDK 10.0.401, Node.js 24.14.1, npm 11.17.0, PowerShell 7.6.6.
 | Normal full runner | Passed: 20 UnitTests, 12 AspectTests, 38 IntegrationTests |
 | Pack with `--configuration Release --no-build --no-restore` | Passed |
 | Final full runner with `TALBY_TEST_PACKAGE` set to the delivered archive | Passed: 70 tests, 0 failures, 0 skipped |
+| Local PackageConsumer with the exact delivered archive | Passed: Raw Text and mixed named/indexed Formatted Text; three `FormatWelcome` overloads |
 
 Final TRX files are retained under the ignored directory:
 
 ```text
-test-results/execution/full-5bbb3f62f29e46cc93d60580e59f1642/Talby.Core.ResxAccess/
+test-results/execution/full-429f3258e0ca4ffb87ffb7f135290d70/Talby.Core.ResxAccess/
 ```
 
 The final run used:
@@ -68,6 +71,44 @@ arguments, independent Formatting Culture, Spanish parent fallback, Reference
 Resource fallback and an actual satellite assembly. Existing tests and their
 assertions were retained; two package Facts were added. Fast/full selection and
 the solution's five-project structure are unchanged.
+
+## Local PackageConsumer follow-up
+
+The original `artifacts/PackageConsumer` referenced the local `1.0.0` archive built
+on 2026-10-02, before Formatted Text generation was implemented. Its generated
+`Program.cs` therefore contained only Raw Text overloads for `Welcome`. An isolated
+reproduction with that archive confirmed zero `FormatWelcome` overloads.
+
+The consumer now references `0.1.0-beta.1`. Its `NuGet.Config` selects
+`artifacts/nuget` for this package and NuGet.org for dependencies, and its project
+uses a separate package cache under `obj/packages`. The restored `.nupkg` hash was
+checked against the delivered archive's hash above. For future repacks of the same
+version, use a fresh consumer package cache before restoring again.
+
+`MetalamaEmitCompilerTransformedFiles=true` refreshes the inspectable output at
+`artifacts/PackageConsumer/obj/Release/net10.0/metalama/Program.cs`. The unchanged
+Translation `Hello {name@string}, {0:N2}!` generates three `FormatWelcome` overloads,
+with required parameters `string name` and `object? arg0`, followed by zero, one or
+two culture parameters. `Welcome()` continues to return Raw Text by contract.
+
+The local check was:
+
+```powershell
+dotnet run --project artifacts/PackageConsumer/PackageConsumer.csproj --configuration Release
+```
+
+Runtime output:
+
+```text
+Just text
+Hello {name@string}, {0:N2}!
+Hello Ada, 12.50!
+```
+
+The current archive passed the complete suite after a Release restore/build:
+20 UnitTests, 12 AspectTests and 38 IntegrationTests. Its SHA-256 file was updated
+only after these checks passed, with a check that the archive had not changed
+during validation. No library implementation change was needed.
 
 ## Failure controls and review
 

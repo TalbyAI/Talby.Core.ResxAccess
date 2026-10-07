@@ -50,6 +50,13 @@ targets through `buildTransitive`. Keep Metalama enabled in the consumer.
 The [package README](src/Talby.Core.ResxAccess/README.md) includes a runnable example.
 The [manual release guide](docs/releasing.md) explains local validation, account
 ownership checks and publication of the exact validated `.nupkg`.
+Its [PowerShell release wizard](docs/releasing.md#powershell-release-wizard) reads
+the version from the project XML and guides preparation, publication and verification:
+
+```powershell
+pwsh -NoProfile -File scripts/release.ps1 -Plan
+pwsh -NoProfile -File scripts/release.ps1 -Mode Prepare
+```
 
 IntegrationTests packs the Release library and verifies an isolated local-feed
 `PackageReference` consumer, including generated methods, satellite assemblies
