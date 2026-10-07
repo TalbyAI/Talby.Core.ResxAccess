@@ -4,12 +4,25 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <MetalamaRemoveCompileTimeOnlyCode>false</MetalamaRemoveCompileTimeOnlyCode>
+    <PackageId>Talby.Core.ResxAccess</PackageId>
+    <Version>0.1.0-beta.1</Version>
+    <Authors>TalbyAI</Authors>
+    <Copyright>Copyright (c) 2026 TalbyAI</Copyright>
+    <Description>Generate validated, strongly typed access to RESX Raw Text and Formatted Text with Metalama.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/TalbyAI/Talby.Core.ResxAccess</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TalbyAI/Talby.Core.ResxAccess</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>resx;localization;resources;metalama</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Talby.Core.ResxAccess.UnitTests" />
     <InternalsVisibleTo Include="Talby.Core.ResxAccess.AspectTests" />
     <PackageReference Include="Metalama.Framework" Version="2026.1.28" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="/" />
+    <None Update="README.md" Pack="true" PackagePath="/" />
     <None
       Include="buildTransitive/Talby.Core.ResxAccess.targets"
       Pack="true"

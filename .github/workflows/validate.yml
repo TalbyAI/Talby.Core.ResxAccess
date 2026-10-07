@@ -46,6 +46,10 @@ jobs:
       - name: Restore solution
         run: dotnet restore Talby.Core.ResxAccess.slnx
 
+      - name: Check release wizard validation
+        shell: pwsh
+        run: ./tests/release-script.Tests.ps1
+
       - name: Build Release
         run: dotnet build Talby.Core.ResxAccess.slnx --configuration Release --no-restore
 

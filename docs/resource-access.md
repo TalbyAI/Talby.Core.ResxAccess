@@ -9,6 +9,27 @@ The [glossary](../CONTEXT.md) defines the domain terms used here.
 ## Adopt the API
 
 Use a .NET 10 SDK project with nullable reference types and implicit usings enabled.
+After the beta is published, a NuGet consumer can use this project file:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>ConsumerRoot</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Talby.Core.ResxAccess" Version="0.1.0-beta.1" />
+  </ItemGroup>
+</Project>
+```
+
+The NuGet package imports its `buildTransitive` targets automatically. Keep Metalama
+enabled; `Metalama.Framework` is a transitive package dependency. See the
+[manual release guide](releasing.md) for validating an unpublished package locally.
+
 For a source consumer at `consumer/Consumer.csproj` beneath the repository root,
 use this project file. Adjust both relative paths if your project lives elsewhere.
 The explicit targets import is required for `ProjectReference` consumers.
