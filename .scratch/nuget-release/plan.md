@@ -45,9 +45,9 @@ Files: library `.csproj`, `LICENSE`, library `README.md`, root `README.md`, `doc
 
 Files: ignored `artifacts/nuget/`, `.scratch/nuget-release/validation.md`.
 
-- [ ] Run `npm run format:check`, solution Release restore/build and `pwsh -NoProfile -File tests/run.ps1 -Mode full`.
-- [ ] Pack into `artifacts/nuget`, validate that exact package in the same package-consumer boundary, and record its SHA-256 checksum.
-- [ ] Review the complete diff, record commands/results and deliver links to the artifact and release guide.
+- [x] Run `npm run format:check`, solution Release restore/build and `pwsh -NoProfile -File tests/run.ps1 -Mode full`.
+- [x] Pack into `artifacts/nuget`, validate that exact package in the same package-consumer boundary, and record its SHA-256 checksum.
+- [x] Review the complete diff, record commands/results and prepare links to the artifact and release guide.
 
 ```powershell
 dotnet pack src/Talby.Core.ResxAccess/Talby.Core.ResxAccess.csproj --configuration Release --no-build --no-restore --output artifacts/nuget
